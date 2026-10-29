@@ -1,6 +1,6 @@
 # SubForgeAI Studio
 
-Aplicativo para Windows voltado à criação e revisão de legendas de anime, com processamento local.
+Aplicativo para Windows voltado à criação e revisão de legendas de anime, com processamento de IA local.
 
 ## Recursos
 
