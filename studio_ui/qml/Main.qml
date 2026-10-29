@@ -195,6 +195,7 @@ ApplicationWindow {
                         ActionButton { text: Tr.tr("Preparar para começar"); onClicked: setupDialog.open() }
                     }
                 }
+                SubtitleStyleControl { Layout.fillWidth: true }
                 RowLayout {
                     Layout.fillWidth: true; spacing: 12
                     Repeater {
@@ -233,6 +234,7 @@ ApplicationWindow {
                     ActionButton { text: Tr.tr("Iniciar fila →"); primary: true; enabled: !Backend.busy && Backend.items.length > Backend.completed; onClicked: Backend.start(window.operationCode) }
                 }
             }
+            SubtitleStyleControl { Layout.fillWidth: true }
             EpisodeQueue { Layout.fillWidth: true; Layout.fillHeight: true }
             RowLayout { Layout.fillWidth: true
                 Text { text: Tr.tr("Tempos, nomes e checkpoints continuam sob os cuidados do processamento existente."); color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; wrapMode: Text.WordWrap }
@@ -259,6 +261,7 @@ ApplicationWindow {
                     Layout.fillWidth: true; title: Tr.tr("Validação da tradução"); description: Tr.tr("Verifica a estrutura e registra trechos que precisam de revisão.")
                     SelectField { model: [Tr.tr("Automática"), Tr.tr("Desativada")]; selectedIndex: Backend.settings.review_mode === "disabled" ? 1 : 0; enabled: !Backend.busy; onActivated: Backend.updateSetting("review_mode", currentIndex ? "disabled" : "auto") }
                 }
+                SubtitleStyleControl { Layout.fillWidth: true }
                 SettingRow {
                     Layout.fillWidth: true; title: Tr.tr("Pasta das traduções"); description: Backend.settings.ollama_out_dir
                     ActionButton { text: Tr.tr("Escolher pasta"); enabled: !Backend.busy; onClicked: Backend.chooseDirectory("ollama_out_dir") }
@@ -342,6 +345,7 @@ ApplicationWindow {
             RowLayout { Layout.fillWidth: true
                 TextField { id: search; Layout.fillWidth: true; placeholderText: Tr.tr("Buscar por episódio ou nome do arquivo…"); color: Theme.text; placeholderTextColor: Theme.muted; padding: 13; background: Rectangle { color: Theme.card; radius: 8; border.color: Theme.line } }
                 ActionButton { text: Tr.tr("Atualizar"); onClicked: Backend.refreshResults() }
+                ActionButton { objectName: "styleSubtitleFolder"; text: Tr.tr("Aplicar padrão streaming na pasta"); enabled: !Backend.busy; onClicked: Backend.styleSubtitleFolder() }
             }
             SplitView {
                 Layout.fillWidth: true; Layout.fillHeight: true
@@ -376,6 +380,8 @@ ApplicationWindow {
                             ActionButton { text: Tr.tr("Abrir arquivo ↗"); implicitHeight: 32; enabled: Backend.previewPath.length > 0; onClicked: Backend.openPath(Backend.previewPath) }
                             ActionButton { text: Tr.tr("Abrir pasta"); implicitHeight: 32; enabled: Backend.previewPath.length > 0; onClicked: Backend.openPath(Backend.previewFolder) }
                         }
+                        ActionButton { objectName: "styleExistingResult"; text: Tr.tr("Aplicar padrão streaming"); Layout.fillWidth: true; primary: true; enabled: /\.(srt|ass|vtt)$/i.test(Backend.previewPath) && !Backend.busy; onClicked: Backend.styleSelectedResult() }
+                        Text { visible: /\.(srt|ass|vtt)$/i.test(Backend.previewPath); text: Tr.tr("Para assistir com o estilo, use a legenda .visual.ass no seu reprodutor. O original continua disponível."); Layout.fillWidth: true; wrapMode: Text.Wrap; color: Theme.muted; font.pixelSize: 11 }
                         Text { text: Tr.tr("PRÉVIA · SOMENTE LEITURA"); color: Theme.accent; font.pixelSize: 9; font.letterSpacing: 1.1 }
                         ScrollView { Layout.fillWidth: true; Layout.fillHeight: true; clip: true
                             TextArea { text: Backend.preview; readOnly: true; selectByMouse: true; textFormat: TextEdit.PlainText; wrapMode: TextEdit.WrapAnywhere; color: Theme.previewText; font.family: "Consolas"; font.pixelSize: 12; background: null }

@@ -739,5 +739,22 @@
   "Consulta interrompida.": "Consulta interrumpida.",
   "Anime selecionado": "Anime seleccionado",
   "Este termo já tem tradução confirmada. A versão local foi preservada.": "Este término ya tiene una traducción confirmada. Se conservó la versión local.",
-  "O glossário local mudou. Atualize a seleção antes de compartilhar.": "El glosario local cambió. Actualiza la selección antes de compartir."
+  "O glossário local mudou. Atualize a seleção antes de compartilhar.": "El glosario local cambió. Actualiza la selección antes de compartir.",
+  "Restaurar estilo padrão": "Restaurar estilo predeterminado",
+  "Negrito": "Negrita",
+  "A fonte escolhida não foi encontrada neste computador. O reprodutor pode substituí-la e mudar a aparência.": "No se encontró la fuente seleccionada en este equipo. El reproductor puede sustituirla y cambiar la apariencia.",
+  "Estilo da legenda": "Estilo del subtítulo",
+  "Fonte, contorno e exportação ASS": "Fuente, contorno y exportación ASS",
+  "Ativado: gera a legenda estilizada automaticamente ao concluir. O original também é mantido.": "Activado: genera el subtítulo con estilo automáticamente al terminar. También se conserva el original.",
+  "Ative para receber a legenda pronta com fonte branca em negrito e contorno preto.": "Actívalo para recibir subtítulos con texto blanco en negrita y contorno negro.",
+  "Selecione uma legenda em Resultados.": "Selecciona un subtítulo en Resultados.",
+  "Legenda estilizada pronta. Use Abrir arquivo ou Abrir pasta.": "Subtítulo con estilo listo. Usa Abrir archivo o Abrir carpeta.",
+  "Aplicando visual da legenda": "Aplicando estilo al subtítulo",
+  "Pasta das legendas prontas": "Carpeta con subtítulos terminados",
+  "{created} legendas estilizadas · {failed} falhas": "{created} subtítulos con estilo · {failed} fallos",
+  "Para assistir com o estilo, use a legenda .visual.ass no seu reprodutor. O original continua disponível.": "Para ver el estilo, carga el subtítulo .visual.ass en tu reproductor. El original sigue disponible.",
+  "Aplicar padrão streaming": "Aplicar estilo streaming",
+  "Aplicar padrão streaming na pasta": "Aplicar estilo streaming a una carpeta",
+  "Visual padrão streaming": "Estilo visual streaming",
+  "O visual padrão streaming usa Trebuchet MS em negrito, contorno preto e escala de 1080p. Não é um padrão oficial de uma plataforma. Preserve ou ajuste as quebras de linha na revisão.": "El estilo de subtítulos streaming usa Trebuchet MS en negrita, contorno negro y escala de 1080p. No es un estilo oficial de una plataforma. Conserva o ajusta los saltos de línea en la revisión."
 }

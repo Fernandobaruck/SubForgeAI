@@ -499,6 +499,43 @@ class Backend(QObject):
         self._scanning = False
         self.changed.emit()
 
+    @Slot()
+    def styleSelectedResult(self):
+        if self.busy:return
+        path=Path(self._preview_path)
+        if not path.is_file() or path.suffix.lower() not in ('.srt','.vtt','.ass'):
+            self._notify('Selecione uma legenda em Resultados.');return
+        from fansub_tools import reference_copy
+        def done(output):
+            self.refreshResults();self.inspectResult(output)
+            self._notify('Legenda estilizada pronta. Use Abrir arquivo ou Abrir pasta.')
+        self.review._submit('Aplicando visual da legenda',lambda:reference_copy(path,self.review._cancel),done,True)
+
+    @Slot()
+    def styleSubtitleFolder(self):
+        if self.busy:return
+        folder=QFileDialog.getExistingDirectory(None,self.translate('Pasta das legendas prontas'),str(Path(self._preview_path).parent if self._preview_path else resolve_dir(self.root,self._settings['ollama_out_dir'])),options=QFileDialog.DontUseNativeDialog)
+        if not folder:return
+        def work():
+            from fansub_tools import reference_copy
+            from speech_context import read_context
+            files=[]
+            for path in Path(folder).rglob('*'):
+                if self.review._cancel.is_set():raise RuntimeError('Cancelado')
+                if path.is_file() and path.suffix.lower() in ('.srt','.vtt','.ass'):files.append(path)
+            created=[];failed=0
+            for path in files:
+                if self.review._cancel.is_set():raise RuntimeError('Cancelado')
+                if read_context(path).get('visual_style')=='reference-v1':continue
+                try:created.append(reference_copy(path,self.review._cancel))
+                except (OSError,ValueError) as exc:failed+=1;self.pipeline.log('[WARN] '+path.name+': '+str(exc))
+            return created,failed
+        def done(result):
+            self.refreshResults()
+            if result[0]:self.inspectResult(result[0][0])
+            self._notify(self.formatText('{created} legendas estilizadas · {failed} falhas',{'created':len(result[0]),'failed':result[1]}))
+        self.review._submit('Aplicando visual da legenda',work,done,True)
+
     @Slot(str)
     def inspectResult(self, path):
         candidate = Path(path)

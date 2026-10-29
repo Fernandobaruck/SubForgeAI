@@ -8,11 +8,12 @@ Dialog {
     property int section: 0
     property string project: review.selectedProject
     function settings() {
-        return fansub.setPreset({font:fontInput.text,size:Number(sizeInput.text),color:colorInput.text,outline_color:outlineColor.text,outline:Number(outlineInput.text),shadow:Number(shadowInput.text),margin:Number(marginInput.text),alignment:alignment.currentIndex===1 ? 8 : 2,width:Number(widthInput.text),height:Number(heightInput.text),preserve_ass:true})
+        return fansub.setPreset({font:fontInput.text,size:Number(sizeInput.text),color:colorInput.text,outline_color:outlineColor.text,outline:Number(outlineInput.text),shadow:Number(shadowInput.text),margin:Number(marginInput.text),alignment:alignment.currentIndex===1 ? 8 : 2,width:Number(widthInput.text),height:Number(heightInput.text),preserve_ass:true,bold:boldInput.checked})
     }
     function fillPreset() {
         var p=fansub.preset
         fontInput.text=p.font;sizeInput.text=String(p.size);colorInput.text=p.color;outlineColor.text=p.outline_color
+        boldInput.checked=p.bold
         outlineInput.text=String(p.outline);shadowInput.text=String(p.shadow);marginInput.text=String(p.margin)
         widthInput.text=String(p.width);heightInput.text=String(p.height);alignment.currentIndex=p.alignment===8 ? 1 : 0
     }
@@ -69,6 +70,14 @@ Dialog {
                 ColumnLayout {
                     width:parent.width;spacing:10
                     Text {text:Tr.tr("SRT/VTT recebem o padrão abaixo. ASS existente conserva estilos, posições, desenhos e fontes originais. Músicas e placas confirmadas usam estilos próprios; eventos simultâneos continuam separados.");Layout.fillWidth:true;wrapMode:Text.Wrap;color:Theme.muted}
+                    Flow {
+                        Layout.fillWidth:true;spacing:8
+                        ActionButton {objectName:"exportReferenceStyle";text:Tr.tr("Visual padrão streaming");enabled:!Backend.busy;onClicked:{fansub.useBuiltin("reference");dialog.fillPreset()}}
+                        ActionButton {objectName:"exportDefaultStyle";text:Tr.tr("Restaurar estilo padrão");enabled:!Backend.busy;onClicked:{fansub.useBuiltin("default");dialog.fillPreset()}}
+                        CheckBox {id:boldInput;objectName:"exportBold";text:Tr.tr("Negrito");palette.windowText:Theme.text;enabled:!Backend.busy}
+                    }
+                    Text {text:Tr.tr("O visual padrão streaming usa Trebuchet MS em negrito, contorno preto e escala de 1080p. Não é um padrão oficial de uma plataforma. Preserve ou ajuste as quebras de linha na revisão.");Layout.fillWidth:true;wrapMode:Text.Wrap;color:Theme.muted}
+                    Text {visible:!fansub.fontAvailable;text:Tr.tr("A fonte escolhida não foi encontrada neste computador. O reprodutor pode substituí-la e mudar a aparência.");Layout.fillWidth:true;wrapMode:Text.Wrap;color:Theme.accent}
                     RowLayout {
                         SelectField {id:projectSelect;property var projects:[{id:"",name:Tr.tr("Padrões globais")}].concat(review.projects);model:projects.map(p=>p.name);selectedIndex:Math.max(0,projects.findIndex(p=>p.id===review.selectedProject));onActivated:review.setProject(projects[currentIndex].id);enabled:!Backend.busy}
                         SelectField {id:profile;model:fansub.profiles.map(p=>p.name);Layout.fillWidth:true}

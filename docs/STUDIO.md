@@ -234,3 +234,19 @@ Feche o Studio antes de substituir seu executável. Alterações Python/QML são
 Em **Animes**, selecione o projeto e abra **Glossário online e sugestões de IA**. O painel tem Catálogo, Contribuir, IA local e Histórico. Consulte [o guia do catálogo](https://github.com/Fernandobaruck/SubForgeAI/blob/main/community/glossary/README.md). A consulta é manual; não há envio automático de termos ou arquivos. A importação cria sugestões e preserva os termos existentes, inclusive os confirmados. Só termos confirmados localmente passam a orientar novas traduções.
 
 O catálogo inicial contém uma coleção opcional de honoríficos; coleções específicas de anime dependem de propostas revisadas. Sem conexão, coleções já baixadas continuam disponíveis pelo cache, com aviso. Na IA local, o TranslateGemma apenas propõe traduções, sem verificar o cânone do anime. A seção Contribuir mostra uma prévia antes de abrir um formulário público no GitHub. É necessário enviar o formulário manualmente e ter uma conta no GitHub para contribuir.
+
+## Visual padrão streaming na exportação ASS
+
+Em **Revisão → Fansub → Exportação ASS**, use **Visual padrão streaming** para carregar um estilo opcional calibrado com as referências: Trebuchet MS em negrito, tamanho ASS 66 em 1920×1080, branco, contorno preto 5, sombra 0, alinhamento inferior e margem 45. O renderizador escala o estilo proporcionalmente em outras resoluções. Não é um padrão oficial nem uma garantia de reprodução idêntica em todos os reprodutores.
+
+O botão apenas preenche os controles. Use **Renderizar prévia no vídeo** para conferir e **Exportar cópia ASS** para gerar a saída; **Salvar padrão** guarda os ajustes nos padrões existentes. **Restaurar estilo padrão** recupera Arial 48 sem negrito. As configurações padrão e os arquivos originais não são alterados automaticamente.
+
+O estilo é aplicado ao converter SRT/VTT em ASS. ASS existente conserva sua diagramação, inclusive placas e posições. As quebras de linha existentes são preservadas; o resultado depende também delas, da resolução e do reprodutor. A fonte precisa existir no computador; o Studio avisa quando ela não é encontrada. Arquivos de fonte do Windows não são incluídos no aplicativo.
+
+## Uso simples do visual padrão streaming
+
+Nas telas **Início**, **Episódios** e **Tradução**, ative **Visual padrão streaming** e use a fila normalmente. Ao concluir, o Studio cria também uma legenda `.visual.ass` ao lado do resultado original, com fonte branca em negrito e contorno preto. Se a incorporação ao vídeo estiver ativada, a versão estilizada é a usada para incorporar. O estilo também é aplicado às saídas de transcrição e extração.
+
+Para legendas já prontas, abra **Resultados** e use **Aplicar padrão streaming na pasta**, escolhendo a pasta das legendas da temporada. Para um único arquivo, selecione-o na lista e clique em **Aplicar padrão streaming**. Não há retradução. Textos e tempos são preservados; os arquivos existentes não são substituídos. Repetir a operação reutiliza uma cópia ainda válida.
+
+Em ASS existente, somente falas comuns recebem os comandos de fonte e contorno; placas posicionadas, desenhos, músicas e efeitos identificados são preservados. A fonte Trebuchet MS deve existir no reprodutor. Os controles de fonte/tamanho da Revisão continuam disponíveis para ajustes avançados, mas não são necessários neste fluxo.

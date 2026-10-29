@@ -24,7 +24,7 @@ DEFAULTS = dict(whisper_model='large-v3-turbo', whisper_language='auto',
                 whisper_device='cuda', whisper_backend='faster', whisper_audio_stream='auto',
                 whisper_demucs_mode='auto', ollama_model='translategemma:12b',
                 resource_cpu_threads=0,resource_gpu_layers=-1,resource_background=False,completion_action='none',update_check_startup=False,
-                review_mode='auto', embed_enabled=False, auto_extract_subs=False,
+                review_mode='auto', subtitle_style='original', embed_enabled=False, auto_extract_subs=False,
                 extract_to='copy', extract_stream='all',
                 whisper_out_dir='outputs/whisper', ollama_out_dir='outputs/pt-br',
                 subs_out_dir='outputs/subs_extradas', embed_output_dir='outputs/com_legenda')
@@ -45,6 +45,7 @@ def validate_settings(values):
                'whisper_device': ('cuda', 'cpu', 'auto'),
                'whisper_demucs_mode': ('auto', 'enabled', 'disabled'),
                'review_mode': ('auto', 'disabled'),
+               'subtitle_style': ('original','reference'),
                'extract_to': ('copy', 'srt', 'ass', 'vtt')}
     for key, allowed in choices.items():
         if result[key] not in allowed:
@@ -137,6 +138,8 @@ class Pipeline:
                 try:
                     effective_operation = item.get('operation', 'auto') if operation == 'resume' else operation
                     results = self._episode(item, settings, effective_operation)
+                    if settings.get('subtitle_style')=='reference' and effective_operation in ('transcribe','extract'):
+                        results=self._style_results(results)
                     if self.cancelled.is_set():
                         break
                     self.events.put(('item', item['id'], {'state': 'Concluído', 'progress': 1,
@@ -370,6 +373,11 @@ class Pipeline:
             translated = confirmed.get(('translation', path_key(translation_source)))
             if not translated or not Path(translated).is_file():
                 raise RuntimeError('O tradutor não confirmou a saída desta execução.')
+            if settings.get('subtitle_style')=='reference':
+                styled=self._style_results([translated])
+                for path in styled:
+                    if path not in results:results.append(path)
+                translated=styled[-1]
             if settings['embed_enabled'] and source.suffix.lower() in MEDIA and source.suffix.lower() not in {'.mp3','.wav','.flac','.m4a','.aac','.ogg'}:
                 def embed_runner(cmd, **_kwargs):
                     run(cmd, 'Incorporando legenda')
@@ -380,6 +388,19 @@ class Pipeline:
                                         force_mkv=True, process_runner=embed_runner)
                 results.append(result)
         return results
+
+    def _style_results(self, paths):
+        from fansub_tools import reference_copy
+        result=list(paths)
+        for path in paths:
+            if Path(path).suffix.lower() not in TRANSLATABLE:continue
+            if self.cancelled.is_set():raise RuntimeError('Cancelado')
+            try:
+                output=reference_copy(path,self.cancelled)
+                if output not in result:result.append(output)
+                self.log('[OK] Legenda com padrão streaming: '+output)
+            except ValueError as exc:self.log('[WARN] '+str(exc))
+        return result
 
     def _transcribe_one(self, source, settings, py, run, confirmed):
         rt = self.runtime

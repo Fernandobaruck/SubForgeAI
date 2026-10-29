@@ -739,5 +739,22 @@
   "Consulta interrompida.": "Lookup stopped.",
   "Anime selecionado": "Selected anime",
   "Este termo já tem tradução confirmada. A versão local foi preservada.": "This term already has a confirmed translation. The local version was preserved.",
-  "O glossário local mudou. Atualize a seleção antes de compartilhar.": "The local glossary changed. Update your selection before sharing."
+  "O glossário local mudou. Atualize a seleção antes de compartilhar.": "The local glossary changed. Update your selection before sharing.",
+  "Restaurar estilo padrão": "Restore default style",
+  "Negrito": "Bold",
+  "A fonte escolhida não foi encontrada neste computador. O reprodutor pode substituí-la e mudar a aparência.": "The selected font was not found on this computer. Your player may substitute it and change the appearance.",
+  "Estilo da legenda": "Subtitle style",
+  "Fonte, contorno e exportação ASS": "Font, outline and ASS export",
+  "Ativado: gera a legenda estilizada automaticamente ao concluir. O original também é mantido.": "Enabled: automatically creates a styled subtitle when finished. The original is also kept.",
+  "Ative para receber a legenda pronta com fonte branca em negrito e contorno preto.": "Enable to get subtitles with bold white text and black outlines.",
+  "Selecione uma legenda em Resultados.": "Select a subtitle in Results.",
+  "Legenda estilizada pronta. Use Abrir arquivo ou Abrir pasta.": "Styled subtitle ready. Use Open file or Open folder.",
+  "Aplicando visual da legenda": "Applying subtitle style",
+  "Pasta das legendas prontas": "Folder with finished subtitles",
+  "{created} legendas estilizadas · {failed} falhas": "{created} subtitles styled · {failed} failures",
+  "Para assistir com o estilo, use a legenda .visual.ass no seu reprodutor. O original continua disponível.": "To watch with this style, load the .visual.ass subtitle in your player. The original remains available.",
+  "Aplicar padrão streaming": "Apply streaming style",
+  "Aplicar padrão streaming na pasta": "Apply streaming style to a folder",
+  "Visual padrão streaming": "Streaming-style look",
+  "O visual padrão streaming usa Trebuchet MS em negrito, contorno preto e escala de 1080p. Não é um padrão oficial de uma plataforma. Preserve ou ajuste as quebras de linha na revisão.": "The streaming subtitle style uses bold Trebuchet MS, black outlines and a 1080p scale. It is not an official platform preset. Keep or adjust line breaks during review."
 }

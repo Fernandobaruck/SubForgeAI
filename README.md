@@ -4,11 +4,11 @@ Aplicativo para Windows voltado à criação e revisão de legendas de anime, co
 
 ## Baixar e começar
 
-**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.2/SubForgeAI-Instalar-1.0.2.zip)**
+**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.3/SubForgeAI-Instalar-1.0.3.zip)**
 
 [Ver todos os downloads e notas da versão](https://github.com/Fernandobaruck/SubForgeAI/releases/latest)
 
-1. Baixe **SubForgeAI-Instalar-1.0.2.zip**, extraia e abra **Instalar.cmd**.
+1. Baixe **SubForgeAI-Instalar-1.0.3.zip**, extraia e abra **Instalar.cmd**.
 2. Escolha uma pasta e aguarde. O instalador baixa, verifica e prepara o aplicativo sem pedir instalação de Python, Qt, Ollama ou FFmpeg à parte.
 3. No Studio, clique em **Preparar para começar** e baixe os modelos que deseja usar. Depois, adicione seus arquivos e inicie pela fila.
 
@@ -26,6 +26,12 @@ O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** in
 - TranslateGemma 12B: cerca de **8,1 GB** adicionais. Whisper Turbo: cerca de **1,6 GB**; Large v3: cerca de **3,1 GB**. Você escolhe quais baixar.
 - A configuração de referência do projeto é **RTX 5070 12 GB e 32 GB de RAM**. Velocidade e aceleração variam com o hardware. Whisper/CTranslate2 usa CUDA em NVIDIA; aceleração em AMD não é garantida.
 - O processamento é local após preparar os recursos necessários. A tradução de legendas gera português do Brasil. Revise os resultados antes de compartilhar.
+
+## Visual padrão streaming
+
+Ative **Visual padrão streaming** em Início, Episódios ou Tradução e use a fila normalmente. Ao terminar, o Studio gera também a legenda `.visual.ass`, preservando o resultado original. É essa cópia que contém a fonte e o contorno para usar no reprodutor.
+
+Para legendas já prontas, abra **Resultados → Aplicar padrão streaming na pasta** e escolha a pasta da temporada, sem traduzir novamente. Também é possível selecionar um único resultado e usar **Aplicar padrão streaming**. O visual é uma aproximação de legendas de streaming, sem vínculo oficial com plataformas; Trebuchet MS precisa estar disponível no computador que reproduz o vídeo.
 
 ## Recursos
 

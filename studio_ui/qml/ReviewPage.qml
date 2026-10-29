@@ -25,6 +25,11 @@ ColumnLayout {
         ActionButton { text: Tr.tr("Criar backup"); enabled: !Backend.busy; onClicked: review.createBackup() }
         ActionButton { text: Tr.tr("Restaurar backup"); enabled: !Backend.busy; onClicked: review.chooseRestoreBackup() }
     }
+    RowLayout {
+        Layout.fillWidth: true; spacing: 10
+        ActionButton { objectName: "openSubtitleStyle"; text: Tr.tr("Estilo da legenda"); enabled: !Backend.busy; onClicked: {fansubDialog.section=1;fansubDialog.open()} }
+        Text { text: Tr.tr("Fonte, contorno e exportação ASS"); color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true; elide: Text.ElideRight }
+    }
     Text { textFormat: Text.PlainText; Layout.fillWidth: true; text: review.loaded ? review.title + (review.dirty ? " *" : "") : Tr.tr("Abra uma legenda ou use Revisar na tela Resultados."); color: Theme.text; font.pixelSize: 13; elide: Text.ElideMiddle }
     RowLayout {
         Layout.fillWidth: true; visible: review.loaded

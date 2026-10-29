@@ -4,7 +4,7 @@ import json,time,uuid,shutil
 from pathlib import Path
 from PySide6.QtCore import QObject,Property,Signal,Slot,QTimer,QUrl
 from PySide6.QtWidgets import QFileDialog
-from fansub_tools import suggest,render_ass,validate_preset,PRESET_DEFAULTS,KINDS,organize,estimate
+from fansub_tools import suggest,render_ass,validate_preset,PRESET_DEFAULTS,REFERENCE_PRESET,KINDS,organize,estimate
 from review_workspace import json_read,digest,atomic_bytes
 from pipeline_io import atomic_write_text,reserve_output,staged_output,directory_lock
 
@@ -20,6 +20,15 @@ class FansubController(QObject):
     def ready(self):return not self.review.owner.busy
     @Property('QVariantMap',notify=changed)
     def preset(self):return self._preset
+    @Property(bool,notify=changed)
+    def fontAvailable(self):
+        from PySide6.QtGui import QGuiApplication,QFontDatabase
+        if not isinstance(QGuiApplication.instance(),QGuiApplication):return False
+        return self._preset['font'].casefold() in {name.casefold() for name in QFontDatabase.families()}
+    @Slot(str)
+    def useBuiltin(self,name):
+        if not self.ready() or name not in ('default','reference'):return
+        self._preset=dict(REFERENCE_PRESET if name=='reference' else PRESET_DEFAULTS);self._image='';self._video='';self.changed.emit()
     @Property('QVariantList',notify=changed)
     def cues(self):
         if not self.review.document:return []
