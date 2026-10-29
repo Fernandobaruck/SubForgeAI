@@ -86,6 +86,11 @@ class OnlineGlossaryTests(unittest.TestCase):
     def test_invalid_cache_does_not_break_startup(self):
         store=G.Store(self.root);store.base.mkdir(parents=True);(store.base/'index.json').write_text('{"catalog":{"schema":1,"collections":[null]}}')
         self.assertEqual(store.cached_catalog(),([],''))
+    def test_cache_preserves_utf8_bom_and_line_endings_for_integrity_checks(self):
+        raw,entry,_=fixture();raw=b'\xef\xbb\xbf'+raw.replace(b',',b',\r\n');entry['sha256']=hashlib.sha256(raw).hexdigest()
+        store=G.Store(self.root);cancel=threading.Event()
+        with patch.object(G,'fetch',return_value=raw):self.assertFalse(store.load(entry,cancel)[1])
+        with patch.object(G,'fetch',side_effect=OSError('offline')):self.assertTrue(store.load(entry,cancel)[1])
 
 
 class OnlineControllerTests(unittest.TestCase):

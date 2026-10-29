@@ -113,7 +113,8 @@ class Store:
         path = self.base / (slug(entry['id']) + '-' + entry['sha256'] + '.json')
         try:
             raw = fetch(entry['id'] + '.json', cancel); rows = collection(raw, entry)
-            atomic_write_text(path, raw.decode('utf-8-sig'))
+            # Preserve the exact signed-by-hash bytes, including a possible BOM.
+            atomic_write_text(path, raw.decode('utf-8'))
             return rows, False
         except (OSError, ValueError, KeyError, TypeError):
             if cancel.is_set(): raise ValueError('Consulta interrompida.')
