@@ -79,7 +79,10 @@ def main():
     api = 'https://api.github.com/repos/' + REPOSITORY
     tag = 'v' + args.version
     try:
-        release = request(api + '/releases/tags/' + tag)
+        releases = request(api + '/releases?per_page=100')
+        release = next((item for item in releases if item['tag_name'] == tag), None)
+        if release is None:
+            raise urllib.error.HTTPError(api, 404, 'Release not found', None, None)
         if not release['draft']:
             print('Release already published: ' + release['html_url'])
             return
