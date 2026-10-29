@@ -34,6 +34,7 @@ ApplicationWindow {
         function onOpened() { window.page = 6 }
     }
     SourceDialog { id: sourceDialog }
+    SetupDialog { id: setupDialog; objectName: "setupDialog" }
     DropArea {
         anchors.fill: parent
         onDropped: function(drop) { if (drop.hasUrls) Backend.addFiles(drop.urls.map(function(u) { return u.toString() })) }
@@ -184,6 +185,14 @@ ApplicationWindow {
                             ActionButton { text: Tr.tr("+  Adicionar arquivos"); primary: true; onClicked: Backend.chooseFiles() }
                             ActionButton { text: Tr.tr("Ver a fila →"); onClicked: window.page = 1 }
                         }
+                    }
+                }
+                Rectangle {
+                    Layout.fillWidth: true; implicitHeight: setupCard.implicitHeight + 28; radius: 10; color: Theme.card; border.color: Theme.line
+                    ColumnLayout { id: setupCard; anchors.fill: parent; anchors.margins: 14; spacing: 8
+                        Text { text: Tr.tr("PRIMEIROS PASSOS"); color: Theme.accent; font.pixelSize: 11 }
+                        Text { text: Tr.tr("Prepare os modelos, adicione os arquivos e inicie pela fila. Os resultados ficam disponíveis para revisão."); color: Theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                        ActionButton { text: Tr.tr("Preparar para começar"); onClicked: setupDialog.open() }
                     }
                 }
                 RowLayout {

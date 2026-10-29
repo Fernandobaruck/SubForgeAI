@@ -29,7 +29,8 @@ __pycache__/
 *.py[cod]
 *.log
 *.spec
-/tools/ffmpeg/
+/tools/ffmpeg/*
+!/tools/ffmpeg/SOURCES.txt
 /tests/season_checkpoint_inventory.json
 /docs/history/
 /docs/validation/

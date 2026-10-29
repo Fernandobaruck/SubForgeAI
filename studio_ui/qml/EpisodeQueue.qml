@@ -17,8 +17,9 @@ Rectangle {
         }
         Text {
             Layout.fillWidth:true;color:Theme.muted;font.pixelSize:11;elide:Text.ElideRight
+            objectName: "queueEstimate"
             property var stats:Backend.review.fansub.queueStats
-            text:stats.pending===0 ? Tr.tr("Fila sem itens pendentes") : stats.seconds===null ? Tr.tr("Estimativa da fila: aguardando histórico compatível") : Tr.format("Estimativa: {minutes} min · {unknown} itens sem histórico",{minutes:Math.max(1,Math.round(stats.seconds/60)),unknown:stats.unknown})
+            text:stats.pending===0 ? Tr.tr("Fila sem itens pendentes") : typeof stats.seconds !== "number" || !isFinite(stats.seconds) ? Tr.tr("Estimativa da fila: aguardando histórico compatível") : Tr.format("Estimativa: {minutes} min · {unknown} itens sem histórico",{minutes:Math.max(1,Math.round(stats.seconds/60)),unknown:stats.unknown})
         }
         Item {
             Layout.fillWidth: true; Layout.fillHeight: true

@@ -1,6 +1,31 @@
 # SubForgeAI Studio
 
-Aplicativo para Windows voltado à criação e revisão de legendas de anime, com processamento de IA local.
+Aplicativo para Windows voltado à criação e revisão de legendas de anime, com processamento local.
+
+## Baixar e começar
+
+**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.1/SubForgeAI-Instalar-1.0.1.zip)**
+
+[Ver todos os downloads e notas da versão](https://github.com/Fernandobaruck/SubForgeAI/releases/latest)
+
+1. Baixe **SubForgeAI-Instalar-1.0.1.zip**, extraia e abra **Instalar.cmd**.
+2. Escolha uma pasta e aguarde. O instalador baixa, verifica e prepara o aplicativo sem pedir instalação de Python, Qt, Ollama ou FFmpeg à parte.
+3. No Studio, clique em **Preparar para começar** e baixe os modelos que deseja usar. Depois, adicione seus arquivos e inicie pela fila.
+
+**Já usa o Studio?** Atualize pela aba **Atualizações**. O arquivo `SubForgeAI-update-*` é destinado a instalações existentes; novos usuários devem baixar o ZIP **Instalar**.
+
+O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** instalado, sem modelos e sem dados pessoais. É necessário espaço temporário adicional durante a instalação. As partes `.bin` da release são baixadas automaticamente pelo instalador. Não é necessário baixá-las manualmente. O botão **Code → Download ZIP** baixa apenas o código para desenvolvimento.
+
+[Guia passo a passo e solução de problemas](docs/PRIMEIROS-PASSOS.md) · [Reportar problema](https://github.com/Fernandobaruck/SubForgeAI/issues)
+
+![Interface escura do SubForgeAI Studio com uma fila de exemplo](assets/screenshots/studio.png)
+
+## O que preciso?
+
+- Windows x64 e internet para a preparação inicial. O pacote e o instalador precisam de espaço temporário; o instalador verifica isso antes do download.
+- TranslateGemma 12B: cerca de **8,1 GB** adicionais. Whisper Turbo: cerca de **1,6 GB**; Large v3: cerca de **3,1 GB**. Você escolhe quais baixar.
+- A configuração de referência do projeto é **RTX 5070 12 GB e 32 GB de RAM**. Velocidade e aceleração variam com o hardware. Whisper/CTranslate2 usa CUDA em NVIDIA; aceleração em AMD não é garantida.
+- O processamento é local após preparar os recursos necessários. A tradução de legendas gera português do Brasil. Revise os resultados antes de compartilhar.
 
 ## Recursos
 
@@ -12,7 +37,7 @@ Aplicativo para Windows voltado à criação e revisão de legendas de anime, co
 
 ## Código e aplicativo portátil
 
-Este repositório contém o código-fonte, a interface, os testes e as ferramentas de desenvolvimento. O download do código do GitHub não é uma instalação portátil completa: runtime Python/Qt, Ollama, FFmpeg e modelos precisam ser preparados separadamente.
+Este repositório contém o código-fonte, a interface, os testes e as ferramentas de desenvolvimento. Para uso normal, prefira o instalador da release, que prepara o runtime e as ferramentas automaticamente. O código do GitHub sozinho não contém esses componentes. Modelos são preparados pelo painel do Studio.
 
 Em uma instalação portátil existente, abra **SubForgeAI Studio.exe** e mantenha `_studio_boot/`, `runtime/` e os demais componentes operacionais junto ao aplicativo. O código também pode ser iniciado pelo Python do runtime:
 

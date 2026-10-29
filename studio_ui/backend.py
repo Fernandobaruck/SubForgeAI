@@ -60,6 +60,8 @@ class Backend(QObject):
         self._maintenance=MaintenanceController(self)
         from .update_controller import UpdateController
         self._updater=UpdateController(self)
+        from .setup_controller import SetupController
+        self._setup=SetupController(self)
         self._restore_queue()
         self.changed.connect(self._sync_queue_model)
         self._sync_queue_model()
@@ -118,6 +120,9 @@ class Backend(QObject):
     def maintenance(self):return self._maintenance
     @Property(QObject,constant=True)
     def updater(self):return self._updater
+
+    @Property(QObject, constant=True)
+    def setup(self): return self._setup
 
     @Property(QObject, constant=True)
     def queueModel(self): return self._queue_model

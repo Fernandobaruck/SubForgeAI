@@ -2,6 +2,10 @@
 
 Execute `SubForgeAI Studio.exe` na raiz. A interface usa Qt Quick/QML. A interface clássica e suas bibliotecas foram removidas da instalação ativa.
 
+## Primeiro uso
+
+Novos usuários: consulte [o guia de instalação e primeiros passos](PRIMEIROS-PASSOS.md). Na tela Início, o botão **Preparar para começar** verifica os componentes e permite baixar TranslateGemma, Whisper Turbo ou Large v3, com progresso e interrupção. Baixe apenas os modelos necessários.
+
 ## Telas
 
 - **Início:** resumo da fila, acesso aos arquivos e identificação do hardware.

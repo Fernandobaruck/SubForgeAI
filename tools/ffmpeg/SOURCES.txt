@@ -1,0 +1,6 @@
+FFmpeg binary distributor: https://www.gyan.dev/ffmpeg/builds/
+Build: 2026-02-23-git-7b15039cdb-essentials_build
+FFmpeg source revision: https://github.com/FFmpeg/FFmpeg/commit/7b15039cdb
+FFmpeg source archive: https://github.com/FFmpeg/FFmpeg/archive/7b15039cdb.tar.gz
+Build information: run ffmpeg.exe -version and ffmpeg.exe -buildconf.
+This build enables GPL version 3 and links additional libraries; see the distributor for build and library source information.

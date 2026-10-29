@@ -23,7 +23,7 @@ def bundle(version='1.0.1',extra=None):
 
 class UpdateTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory(dir=ROOT/'tests');self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)/'app';self.root.mkdir();self.pin=patch.object(U,'PUBLIC_KEY_B64',PIN);self.pin.start();self.addCleanup(self.pin.stop)
+        self.temp=tempfile.TemporaryDirectory(dir=ROOT/'tests');self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)/'app';self.root.mkdir();self.installed=patch.object(U,'VERSION','1.0.0');self.installed.start();self.addCleanup(self.installed.stop);self.controller_version=patch('studio_ui.update_controller.VERSION','1.0.0');self.controller_version.start();self.addCleanup(self.controller_version.stop);self.pin=patch.object(U,'PUBLIC_KEY_B64',PIN);self.pin.start();self.addCleanup(self.pin.stop)
     def prepared(self):
         files,package,envelope=bundle();job=self.root/'.updates/jobs'/uuid.uuid4().hex;job.mkdir(parents=True);(job/'package.zip').write_bytes(package);U.extract_verified(self.root,job,envelope['manifest'],job/'package.zip');U.save_json(job/'manifest.json',envelope)
         for path in files:target=U.safe_target(self.root,path);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(b'original '+path.encode())

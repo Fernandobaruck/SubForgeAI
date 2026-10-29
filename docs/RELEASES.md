@@ -62,3 +62,21 @@ Após publicar, use **Verificar atualizações** no aplicativo. O launcher recus
 ## Publicação automatizada pelo mantenedor
 
 Com uma sessão do GitHub autorizada no Git Credential Manager, após preparar e verificar o pacote assinado, execute `runtime/python/python.exe -B -X utf8 tools/publish_release.py --version 1.0.0`. A ferramenta valida a assinatura e o hash, cria uma release em rascunho, envia os dois arquivos e publica. Credenciais não são gravadas nem exibidas. Uma release já publicada não é substituída.
+
+## Pacote inicial para novos usuários
+
+A partir de 1.0.1, `tools/build_portable.py` cria a instalação inicial sem modelos ou dados pessoais. Ela inclui o runtime e as ferramentas necessárias. Bibliotecas estáticas de desenvolvimento (`*.lib`), atalhos e caches de bytecode não são necessários para executar e ficam fora do pacote. Os componentes operacionais da instalação existente são preservados.
+
+Com o runtime preparado e a chave de publicação disponível no perfil do mantenedor:
+
+```powershell
+runtime/python/python.exe -B -X utf8 tools/prepare_release.py --version 1.0.1
+runtime/python/python.exe -B -X utf8 tools/build_portable.py --version 1.0.1
+runtime/python/python.exe -B -X utf8 tools/publish_release.py --version 1.0.1 --portable
+```
+
+Execute as verificações antes de publicar. O instalador pequeno `SubForgeAI-Instalar-1.0.1.zip` contém `Instalar.cmd` e `Instalar.ps1`. Ele verifica um manifesto RSA/SHA-256 próprio e baixa as partes assinadas de até 1 GiB, respeitando o limite por arquivo do GitHub. Os nomes, tamanhos e hashes das partes estão no manifesto. A junção, a verificação do ZIP e a extração são automáticas; o destino precisa ser uma pasta nova. Downloads parciais são mantidos para retomada e partes são removidas depois da instalação bem-sucedida.
+
+A assinatura do manifesto protege o pacote. O executável e os scripts não possuem assinatura Authenticode e o Windows pode exibir editor desconhecido. Não instrua usuários a desativar o antivírus.
+
+`tools/check_installer.py` valida uma instalação pequena assinada, proteção de pasta existente, rejeição de assinatura inválida, arquivo corrompido e caminhos fora da pasta. `tools/check_first_run_ui.py` valida o painel nos três idiomas e dois temas. O pacote completo também deve ser extraído e aberto em uma pasta limpa antes da publicação.

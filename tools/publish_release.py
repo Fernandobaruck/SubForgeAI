@@ -4,21 +4,26 @@ Credentials remain in memory and are never logged or written to the project.
 """
 import argparse
 import json
+import base64
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from release_info import REPOSITORY
+from release_info import REPOSITORY, PUBLIC_KEY_B64
+from release_crypto import verify
 from update_core import file_sha, validate_envelope, version_tuple
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--version', required=True)
+    parser.add_argument('--portable', action='store_true')
+    parser.add_argument('--draft-only', action='store_true')
     args = parser.parse_args()
     version_tuple(args.version)
     folder = ROOT / 'dist/releases' / ('v' + args.version)
@@ -32,6 +37,22 @@ def main():
         raise ValueError('Release identity differs from this source checkout')
     if package.stat().st_size != payload['zip_size'] or file_sha(package) != payload['zip_sha256']:
         raise ValueError('Update package does not match its signed manifest')
+    paths = [package, manifest]
+    if args.portable:
+        portable_manifest = folder / f'SubForgeAI-portable-{args.version}.manifest.json'
+        portable_envelope = json.loads(portable_manifest.read_text(encoding='utf-8'))
+        encoded = base64.b64decode(portable_envelope['payload_b64'], validate=True)
+        if not verify(base64.b64decode(PUBLIC_KEY_B64), encoded, base64.b64decode(portable_envelope['signature'], validate=True)):
+            raise ValueError('Portable signature is invalid')
+        portable = json.loads(encoded)
+        if portable['repository'] != REPOSITORY or portable['version'] != args.version:
+            raise ValueError('Portable identity mismatch')
+        paths.extend([folder / f'SubForgeAI-Instalar-{args.version}.zip', portable_manifest])
+        for part in portable['parts']:
+            path = folder / part['name']
+            if path.parent != folder or path.stat().st_size != part['size'] or file_sha(path) != part['sha256']:
+                raise ValueError('Portable part mismatch')
+            paths.append(path)
     owner = REPOSITORY.split('/')[0]
     result = subprocess.run(
         ['git', '-c', 'credential.interactive=never', 'credential', 'fill'],
@@ -42,14 +63,16 @@ def main():
         raise RuntimeError('No usable GitHub login in Git Credential Manager')
     token = credentials['password']
 
-    def request(url, method='GET', data=None, content_type='application/json'):
-        req = urllib.request.Request(url, data=data, method=method, headers={
+    def request(url, method='GET', data=None, content_type='application/json', size=None):
+        headers = {
             'Authorization': 'Bearer ' + token,
             'Accept': 'application/vnd.github+json',
             'X-GitHub-Api-Version': '2022-11-28',
             'User-Agent': 'SubForgeAI-release-publisher',
             'Content-Type': content_type,
-        })
+        }
+        if size is not None: headers['Content-Length'] = str(size)
+        req = urllib.request.Request(url, data=data, method=method, headers=headers)
         with urllib.request.urlopen(req, timeout=180) as response:
             return json.load(response)
 
@@ -70,12 +93,33 @@ def main():
             'draft': True, 'prerelease': False,
         }).encode())
     assets = {asset['name']: asset for asset in release.get('assets', [])}
-    for path in (package, manifest):
+    class Upload:
+        def __init__(self, stream, path):
+            self.stream, self.path = stream, path
+            self.done = 0; self.last = time.monotonic()
+        def read(self, size=-1):
+            data = self.stream.read(size); self.done += len(data)
+            if time.monotonic() - self.last > 15:
+                print(f'Uploading {self.path.name}: {self.done*100/self.path.stat().st_size:.1f}%', flush=True)
+                self.last = time.monotonic()
+            return data
+    for path in paths:
         if path.name in assets:
-            raise RuntimeError('Draft already has an asset with this name; inspect it before retrying')
-        content_type = 'application/zip' if path.suffix == '.zip' else 'application/json'
-        request(f'https://uploads.github.com/repos/{REPOSITORY}/releases/{release["id"]}/assets?name={path.name}',
-                'POST', path.read_bytes(), content_type)
+            asset = assets[path.name]
+            if asset.get('digest') != 'sha256:' + file_sha(path) or asset['size'] != path.stat().st_size:
+                raise RuntimeError('Draft asset differs from local package; inspect before retrying')
+            print('Verified existing asset: ' + path.name, flush=True)
+            continue
+        content_type = {'.zip':'application/zip', '.json':'application/json'}.get(path.suffix, 'application/octet-stream')
+        print('Uploading: ' + path.name, flush=True)
+        with path.open('rb') as stream:
+            asset = request(f'https://uploads.github.com/repos/{REPOSITORY}/releases/{release["id"]}/assets?name={path.name}',
+                    'POST', Upload(stream, path), content_type, path.stat().st_size)
+        if asset.get('digest') != 'sha256:' + file_sha(path):
+            raise RuntimeError('Remote asset hash differs from local package')
+    if args.draft_only:
+        print('Draft ready: ' + release['html_url'], flush=True)
+        return
     release = request(api + '/releases/' + str(release['id']), 'PATCH', b'{"draft":false}')
     print('Published: ' + release['html_url'])
 

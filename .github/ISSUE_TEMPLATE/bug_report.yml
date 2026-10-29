@@ -1,0 +1,49 @@
+name: Relatar problema
+description: Conte o que aconteceu no SubForgeAI Studio.
+title: "[Problema] "
+body:
+  - type: markdown
+    attributes:
+      value: "Antes de enviar, consulte o guia de primeiros passos. Remova dados pessoais dos logs e não envie tokens, vídeos ou legendas sem autorização."
+  - type: input
+    id: version
+    attributes:
+      label: Versão do Studio
+      placeholder: "Ex.: 1.0.1"
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Windows, GPU e RAM
+      placeholder: "Ex.: Windows 11 x64, RTX 5070 12 GB, 32 GB RAM"
+    validations:
+      required: true
+  - type: dropdown
+    id: operation
+    attributes:
+      label: Onde ocorreu?
+      options:
+        - Instalação inicial
+        - Preparação dos modelos
+        - Transcrição
+        - Tradução
+        - Extração ou OCR
+        - Revisão
+        - Atualização
+        - Outro
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passos e resultado
+      description: O que você fez, o que esperava e o que aconteceu?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Mensagem de erro ou trecho do log
+      description: Disponível em Diagnóstico ou Ver registro. Remova caminhos e dados pessoais.
+      render: text

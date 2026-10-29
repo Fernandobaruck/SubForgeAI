@@ -1,0 +1,3 @@
+module Studio
+singleton Theme 1.0 Theme.qml
+singleton Tr 1.0 Tr.qml

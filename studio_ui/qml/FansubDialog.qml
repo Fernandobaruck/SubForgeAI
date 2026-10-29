@@ -139,7 +139,7 @@ Dialog {
                 ColumnLayout {
                     width:parent.width;spacing:14
                     Text {text:Tr.tr("Estimativas usam pelo menos dois episódios concluídos com operação, formato, modelos e configurações compatíveis. O progresso entre etapas não é linear; trate os valores como aproximações.");color:Theme.muted;Layout.fillWidth:true;wrapMode:Text.Wrap}
-                    Text {text:fansub.queueStats.pending===0 ? Tr.tr("Fila sem itens pendentes") : fansub.queueStats.seconds===null ? Tr.tr("Tempo restante: aguardando histórico compatível") : Tr.format("Tempo restante estimado: {minutes} min",{minutes:Math.max(1,Math.round(fansub.queueStats.seconds/60))});color:Theme.text;font.pixelSize:18}
+                    Text {text:fansub.queueStats.pending===0 ? Tr.tr("Fila sem itens pendentes") : typeof fansub.queueStats.seconds !== "number" || !isFinite(fansub.queueStats.seconds) ? Tr.tr("Tempo restante: aguardando histórico compatível") : Tr.format("Tempo restante estimado: {minutes} min",{minutes:Math.max(1,Math.round(fansub.queueStats.seconds/60))});color:Theme.text;font.pixelSize:18}
                     Text {text:Tr.format("{count} itens sem histórico suficiente",{count:fansub.queueStats.unknown});color:Theme.muted}
                     Text {text:fansub.queueStats.episodesPerHour===null ? Tr.tr("Velocidade: indisponível") : Tr.format("Velocidade histórica: {rate} episódios/h",{rate:fansub.queueStats.episodesPerHour});color:Theme.text}
                     Text {text:fansub.queueStats.outputBytes===null ? Tr.tr("Espaço de saída: aguardando histórico compatível") : Tr.format("Saídas estimadas: {size} MB",{size:Math.ceil(fansub.queueStats.outputBytes/1048576)});color:Theme.text}
