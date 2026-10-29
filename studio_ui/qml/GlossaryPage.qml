@@ -5,6 +5,8 @@ ColumnLayout {
     property var review: Backend.review
     spacing: 12
     SeasonDialog { id: seasonDialog }
+    OnlineGlossaryDialog { id: onlineDialog }
+    ActionButton { objectName: "openOnlineGlossary"; text: Tr.tr("Glossário online e sugestões de IA"); enabled: !Backend.busy; onClicked: onlineDialog.open() }
     ActionButton { objectName: "seasonOpenAnime"; text: Tr.tr("Temporada e guia de estilo"); enabled: !Backend.busy; onClicked: {seasonDialog.section=3;seasonDialog.open()} }
     RowLayout {
         Layout.fillWidth: true

@@ -4,11 +4,11 @@ Aplicativo para Windows voltado à criação e revisão de legendas de anime, co
 
 ## Baixar e começar
 
-**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.1/SubForgeAI-Instalar-1.0.1.zip)**
+**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.2/SubForgeAI-Instalar-1.0.2.zip)**
 
 [Ver todos os downloads e notas da versão](https://github.com/Fernandobaruck/SubForgeAI/releases/latest)
 
-1. Baixe **SubForgeAI-Instalar-1.0.1.zip**, extraia e abra **Instalar.cmd**.
+1. Baixe **SubForgeAI-Instalar-1.0.2.zip**, extraia e abra **Instalar.cmd**.
 2. Escolha uma pasta e aguarde. O instalador baixa, verifica e prepara o aplicativo sem pedir instalação de Python, Qt, Ollama ou FFmpeg à parte.
 3. No Studio, clique em **Preparar para começar** e baixe os modelos que deseja usar. Depois, adicione seus arquivos e inicie pela fila.
 
@@ -31,6 +31,7 @@ O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** in
 
 - Extração de legendas, transcrição com Whisper large-v3 e large-v3-turbo e tradução com TranslateGemma pelo Ollama.
 - Fila de episódios, retomada de tradução, glossários e memória por série.
+- [Glossário online opcional](community/glossary/README.md), com prévia de importação, conflitos, sugestões de IA local e contribuição revisada pelo GitHub.
 - Revisão lado a lado, editor de legendas, sincronização, controle de legibilidade e exportação ASS.
 - Interface Qt Quick/QML em português, inglês e espanhol, com temas escuro e claro.
 - Atualizações assinadas, backup e recuperação da versão anterior.

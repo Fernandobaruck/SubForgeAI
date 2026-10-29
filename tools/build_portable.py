@@ -18,9 +18,9 @@ from update_core import allowed, canonical, file_sha
 def files(root):
     root = Path(root)
     candidates = list(root.glob('*.py')) + [root / 'SubForgeAI Studio.exe']
-    for folder in ('studio_ui', 'assets/brand', '_studio_boot', 'runtime', 'lib', 'tools/ffmpeg', 'licenses'):
+    for folder in ('studio_ui', 'assets/brand', 'assets/screenshots', '_studio_boot', 'runtime', 'lib', 'tools/ffmpeg', 'licenses'):
         candidates.extend(p for p in (root / folder).rglob('*') if p.is_file())
-    candidates += [root / 'ollama.exe', root / 'docs/STUDIO.md', root / 'docs/PRIMEIROS-PASSOS.md', root / 'docs/THIRD-PARTY.md']
+    candidates += [root / 'ollama.exe', root / 'docs/STUDIO.md', root / 'docs/PRIMEIROS-PASSOS.md', root / 'docs/THIRD-PARTY.md', root / 'community/glossary/README.md']
     for path in sorted(set(candidates)):
         relative = path.relative_to(root)
         if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):

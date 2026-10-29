@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "collections": [
+    {
+      "id": "honorificos-opcional",
+      "title": "Honoríficos: preservação opcional",
+      "description": "Convenção geral, não específica de um anime. Use somente se o seu guia de estilo preserva honoríficos; revise cada termo.",
+      "revision": "1",
+      "source_language": "ja",
+      "target_language": "pt-BR",
+      "sha256": "36b7ce87b82abba444ba5f2dfb99f2efa7c37faa7d7c1cc8d02612570d6ea1fd"
+    }
+  ]
+}

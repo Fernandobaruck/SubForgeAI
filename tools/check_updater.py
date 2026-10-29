@@ -5,6 +5,7 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT));sys.path.insert(0,str(ROOT/'tests'))
 os.environ['QT_QPA_PLATFORM']='offscreen';os.environ['QT_QUICK_BACKEND']='software'
 import update_core as U
+_parts=list(U.version_tuple(U.VERSION));_parts[2]+=1;NEXT_VERSION=".".join(map(str,_parts))
 from release_crypto import generate_key
 from tools.prepare_release import build
 from PySide6.QtCore import QObject,QUrl,QCoreApplication,QEvent,qInstallMessageHandler
@@ -34,11 +35,11 @@ def main():
     source.write_text(re.sub(r'(?m)^PUBLIC_KEY_B64\s*=.*','PUBLIC_KEY_B64 = '+repr(pin),text),encoding='utf-8')
     original=source.read_bytes();(root/'config.json').write_text('{"custom":777}');personal=root/'outputs/pt-br/personal.srt';personal.parent.mkdir(parents=True);personal.write_bytes(b'PERSONAL');models=root/'cache/model.bin';models.parent.mkdir(parents=True);models.write_bytes(b'MODEL')
     with patch.object(U,'PUBLIC_KEY_B64',pin):
-        package,manifest=build(root,folder/'package','1.0.1',private);envelope=json.loads(manifest.read_text('utf-8'));job=root/'.updates/jobs'/uuid.uuid4().hex;job.mkdir(parents=True);shutil.copy2(package,job/'package.zip');U.extract_verified(root,job,envelope['manifest'],job/'package.zip');U.save_json(job/'manifest.json',envelope)
+        package,manifest=build(root,folder/'package',NEXT_VERSION,private);envelope=json.loads(manifest.read_text('utf-8'));job=root/'.updates/jobs'/uuid.uuid4().hex;job.mkdir(parents=True);shutil.copy2(package,job/'package.zip');U.extract_verified(root,job,envelope['manifest'],job/'package.zip');U.save_json(job/'manifest.json',envelope)
         def health():
             process=subprocess.run([str(ROOT/'runtime/python/python.exe'),'-B','-X','utf8',str(root/'studio_launcher.py'),'--smoke-test','--update-health'],cwd=root,capture_output=True,text=True,encoding='utf-8',timeout=40)
             (folder/'health.log').write_text(process.stdout+'\n'+process.stderr,encoding='utf-8');return process.returncode==0 and '"pages_loaded": 9' in process.stdout
-        U.apply(root,job,health);assert "1.0.1" in source.read_text('utf-8');U.rollback(root,job);assert source.read_bytes()==original
+        U.apply(root,job,health);assert NEXT_VERSION in source.read_text('utf-8');U.rollback(root,job);assert source.read_bytes()==original
         try:U.apply(root,job,lambda:False)
         except ValueError:pass
         else:raise AssertionError('health failure must roll back')
@@ -50,7 +51,7 @@ def main():
         engine=QQmlApplicationEngine();engine.rootContext().setContextProperty('Backend',backend);engine.load(QUrl.fromLocalFile(str(ROOT/'studio_ui/qml/Main.qml')));assert engine.rootObjects();window=engine.rootObjects()[0];window.setProperty('page',8);QTest.qWait(150)
         with patch('studio_ui.update_controller.latest_release',return_value=None):click(window,'checkUpdates');wait(review,app)
         assert 'Ainda não há' in updater.status and not updater.canDownload
-        release=dict(version='1.0.1',notes='Atualização de teste\n<script>texto sem execução</script>',page=updater.releasePage,zip_url='https://github.com/'+U.REPOSITORY+'/releases/download/v1.0.1/SubForgeAI-update-1.0.1.zip',envelope=envelope)
+        release=dict(version=NEXT_VERSION,notes='Atualização de teste\n<script>texto sem execução</script>',page=updater.releasePage,zip_url='https://github.com/'+U.REPOSITORY+'/releases/download/v'+NEXT_VERSION+'/SubForgeAI-update-'+NEXT_VERSION+'.zip',envelope=envelope)
         with patch('studio_ui.update_controller.latest_release',return_value=release):click(window,'checkUpdates');wait(review,app)
         assert updater.canDownload
         def fetch(url,limit,cancel=None,destination=None,progress=None):Path(destination).write_bytes(package.read_bytes());progress(len(package.read_bytes()),limit)

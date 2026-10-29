@@ -228,3 +228,9 @@ Para recompilar o inicializador, com PyInstaller 6.22.0 no runtime:
 ```
 
 Feche o Studio antes de substituir seu executável. Alterações Python/QML são carregadas na próxima abertura. A qualidade de uma temporada inteira continua exigindo revisão de suas legendas; o teste curto de integração não substitui essa revisão.
+
+## Glossário online (1.0.2)
+
+Em **Animes**, selecione o projeto e abra **Glossário online e sugestões de IA**. O painel tem Catálogo, Contribuir, IA local e Histórico. Consulte [o guia do catálogo](https://github.com/Fernandobaruck/SubForgeAI/blob/main/community/glossary/README.md). A consulta é manual; não há envio automático de termos ou arquivos. A importação cria sugestões e preserva os termos existentes, inclusive os confirmados. Só termos confirmados localmente passam a orientar novas traduções.
+
+O catálogo inicial contém uma coleção opcional de honoríficos; coleções específicas de anime dependem de propostas revisadas. Sem conexão, coleções já baixadas continuam disponíveis pelo cache, com aviso. Na IA local, o TranslateGemma apenas propõe traduções, sem verificar o cânone do anime. A seção Contribuir mostra uma prévia antes de abrir um formulário público no GitHub. É necessário enviar o formulário manualmente e ter uma conta no GitHub para contribuir.

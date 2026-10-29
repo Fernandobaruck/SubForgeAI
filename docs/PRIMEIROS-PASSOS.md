@@ -2,7 +2,7 @@
 
 ## Instalar
 
-1. Na página de [downloads](https://github.com/Fernandobaruck/SubForgeAI/releases/latest), baixe **SubForgeAI-Instalar-1.0.1.zip**.
+1. Na página de [downloads](https://github.com/Fernandobaruck/SubForgeAI/releases/latest), baixe **SubForgeAI-Instalar-1.0.2.zip**.
 2. Extraia o ZIP em uma pasta e dê dois cliques em **Instalar.cmd**. Não execute de dentro do ZIP e não é necessário executar como administrador.
 3. Escolha onde guardar o aplicativo. Aguarde o download, a verificação e a extração. O Studio abre ao terminar.
 

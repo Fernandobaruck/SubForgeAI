@@ -28,9 +28,13 @@ class ReviewController(QObject):
         self._season=SeasonController(self)
         from .fansub_controller import FansubController
         self._fansub=FansubController(self)
+        from .online_glossary_controller import OnlineGlossaryController
+        self._online=OnlineGlossaryController(self)
         self.refreshProjects()
     def _text(self,text):return self.owner.translate(text)
     def _notify(self,text):self.owner._notify(text)
+    @Property(QObject,constant=True)
+    def online(self):return self._online
     @Property(QObject,constant=True)
     def fansub(self):return self._fansub
     @Property(QObject,constant=True)

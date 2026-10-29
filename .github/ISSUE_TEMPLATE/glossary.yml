@@ -1,0 +1,22 @@
+name: Contribuir com glossário
+description: Proponha termos revisados para um anime ou uma convenção geral.
+title: "[Glossário] "
+body:
+  - type: markdown
+    attributes:
+      value: "Esta proposta será pública. Envie somente termos que deseja compartilhar; não inclua caminhos pessoais, tokens ou legendas completas. Uma proposta não entra automaticamente no catálogo: exige revisão do mantenedor."
+  - type: textarea
+    id: terms
+    attributes:
+      label: Termos
+      description: Cole o JSON da prévia do Studio. Inclua o anime, idioma de origem (en ou ja), idioma de destino e os pares source/target.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Referências e contexto
+      description: Explique o significado dos termos e como conferiu a tradução. Indique fontes públicas quando disponíveis e se a sugestão foi auxiliada por IA.
+    validations:
+      required: true
