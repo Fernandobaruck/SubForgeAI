@@ -100,8 +100,11 @@ def main():
         def __init__(self, stream, path):
             self.stream, self.path = stream, path
             self.done = 0; self.last = time.monotonic()
-        def read(self, size=-1):
-            data = self.stream.read(size); self.done += len(data)
+        def __iter__(self): return self
+        def __next__(self):
+            data = self.stream.read(1024 * 1024)
+            if not data: raise StopIteration
+            self.done += len(data)
             if time.monotonic() - self.last > 15:
                 print(f'Uploading {self.path.name}: {self.done*100/self.path.stat().st_size:.1f}%', flush=True)
                 self.last = time.monotonic()
