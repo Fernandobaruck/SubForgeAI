@@ -33,6 +33,30 @@ class FirstRunTests(unittest.TestCase):
         (blob / 'sha256-bbb').touch()
         self.assertTrue(first_run.inspect(self.root)['translation'])
 
+    def test_translation_sizes_have_independent_installation_state(self):
+        path = self.root / 'ollama_models_v2/manifests/registry.ollama.ai/library/translategemma/4b'
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({'config': {'digest': 'sha256:aaa'}, 'layers': []}))
+        blobs = self.root / 'ollama_models_v2/blobs'; blobs.mkdir()
+        (blobs / 'sha256-aaa').touch()
+        state = first_run.inspect(self.root, 'translategemma:4b')
+        self.assertTrue(state['translation'])
+        self.assertFalse(state['translations']['translategemma:12b'])
+        self.assertFalse(first_run.inspect(self.root)['translation'])
+
+    def test_27b_checks_larger_disk_requirement_before_network(self):
+        space = type('Space', (), {'free': 15 * 1024**3})()
+        with patch('studio_ui.setup_support.shutil.disk_usage', return_value=space):
+            with self.assertRaisesRegex(ValueError, 'Espaço'):
+                first_run.download(self.root, 'translategemma:27b', lambda *a: None, threading.Event())
+        self.assertEqual(list(self.root.iterdir()), [])
+
+    def test_selected_translation_size_survives_settings_validation(self):
+        from studio_ui.pipeline import validate_settings
+        for model in first_run.TRANSLATION_MODELS:
+            self.assertEqual(validate_settings({'ollama_model': model})['ollama_model'], model)
+        self.assertEqual(validate_settings({'ollama_model': '../unknown'})['ollama_model'], 'translategemma:12b')
+
     def test_partial_whisper_is_not_ready(self):
         snapshot = self.root / 'cache/hub/models--Systran--faster-whisper-large-v3/snapshots' / ('a'*40)
         snapshot.mkdir(parents=True)
@@ -40,6 +64,19 @@ class FirstRunTests(unittest.TestCase):
         self.assertFalse(first_run.inspect(self.root)['whisper']['large-v3'])
         (snapshot/'tokenizer.json').touch()
         self.assertTrue(first_run.inspect(self.root)['whisper']['large-v3'])
+
+    def test_all_whisper_choices_work_in_settings_and_exact_local_lookup(self):
+        from studio_ui.pipeline import validate_settings
+        from whisper_audio import local_faster_model
+        from studio_ui.vulkan_support import model_path
+        for model,repo in first_run.MODELS.items():
+            self.assertEqual(validate_settings({'whisper_model':model})['whisper_model'],model)
+            snapshot=self.root/'cache/hub'/('models--'+repo.replace('/','--'))/'snapshots'/('a'*40)
+            snapshot.mkdir(parents=True)
+            for name in ('model.bin','config.json','tokenizer.json'):(snapshot/name).touch()
+            self.assertEqual(Path(local_faster_model(model,self.root)),snapshot)
+            self.assertEqual(model_path(self.root,model).name,'ggml-'+model+'.bin')
+            self.assertTrue(first_run.inspect(self.root)['whisper'][model])
 
     def test_unknown_model_is_rejected_without_writes(self):
         with self.assertRaises(ValueError):

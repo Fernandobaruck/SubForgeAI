@@ -131,7 +131,7 @@ class StudioPipelineTests(unittest.TestCase):
         self.assertEqual(self.runtime.stops, 1)
 
     def test_settings_restrict_models_without_erasing_unknown_keys(self):
-        config = validate_settings(dict(ollama_model='old', whisper_model='small',
+        config = validate_settings(dict(ollama_model='old', whisper_model='unknown',
                                         extract_stream='nope', custom='preserved'))
         self.assertEqual(config['ollama_model'], 'translategemma:12b')
         self.assertEqual(config['whisper_model'], 'large-v3-turbo')
@@ -292,6 +292,8 @@ class StudioRuntimeTests(unittest.TestCase):
             _pick_managed_ollama_host=lambda:'127.0.0.1:11435',
             _subprocess_hide_window_kwargs=lambda:{}, _kill_process_tree=self.killed.append)
         self.runtime = PortableRuntime(self.legacy,self.folder)
+        from unittest.mock import patch
+        mocked=patch('studio_ui.gpu_policy.cuda_available',return_value=True);mocked.start();self.addCleanup(mocked.stop)
 
     def test_owned_server_always_uses_portable_home_and_models(self):
         from unittest.mock import Mock,patch

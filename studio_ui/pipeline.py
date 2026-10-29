@@ -21,7 +21,7 @@ MEDIA = {'.mkv', '.mp4', '.avi', '.mov', '.webm', '.m4v', '.mpg', '.mpeg',
 SUBTITLES = {'.srt', '.ass', '.vtt', '.ssa', '.sub', '.sup', '.idx', '.mks'}
 TRANSLATABLE = {'.srt', '.ass', '.vtt'}
 DEFAULTS = dict(whisper_model='large-v3-turbo', whisper_language='auto',
-                whisper_device='cuda', whisper_backend='faster', whisper_audio_stream='auto',
+                whisper_device='auto', whisper_backend='faster', whisper_audio_stream='auto',
                 whisper_demucs_mode='auto', ollama_model='translategemma:12b',
                 resource_cpu_threads=0,resource_gpu_layers=-1,resource_background=False,completion_action='none',update_check_startup=False,
                 review_mode='auto', subtitle_style='original', embed_enabled=False, auto_extract_subs=False,
@@ -41,8 +41,9 @@ def resolve_dir(root, value):
 
 def validate_settings(values):
     result = {**DEFAULTS, **values}
-    choices = {'whisper_model': ('large-v3', 'large-v3-turbo'),
-               'whisper_device': ('cuda', 'cpu', 'auto'),
+    from whisper_audio import WHISPER_REPOSITORIES
+    choices = {'whisper_model': tuple(WHISPER_REPOSITORIES),
+               'whisper_device': ('cuda', 'vulkan', 'auto'),
                'whisper_demucs_mode': ('auto', 'enabled', 'disabled'),
                'review_mode': ('auto', 'disabled'),
                'subtitle_style': ('original','reference'),
@@ -53,8 +54,11 @@ def validate_settings(values):
     from maintenance_tools import resources
     result.update(resources(result))
     if result.get('completion_action') not in ('none','notify','open','sleep'):result['completion_action']='none'
-    result['ollama_model'] = 'translategemma:12b'
-    result['whisper_backend'] = 'faster'
+    from .setup_support import TRANSLATION_MODELS
+    if result['ollama_model'] not in tuple(TRANSLATION_MODELS):
+        result['ollama_model'] = DEFAULTS['ollama_model']
+    result['whisper_backend'] = 'auto'
+    result['resource_gpu_layers'] = -1
     for key in ('embed_enabled', 'auto_extract_subs','update_check_startup'):
         result[key] = result[key] is True or str(result[key]).lower() in ('1', 'true')
     if not re.fullmatch(r'all|\d+(?:,\d+)*', str(result['extract_stream'])):
@@ -188,17 +192,17 @@ class Pipeline:
         if not hasattr(self,'_prepared'):self._prepared={}
         self._prepared.update({key: None for key in by_source})
         stems = settings['whisper_demucs_mode']
-        if stems == 'auto': stems = 'enabled' if settings['whisper_model'] == 'large-v3' else 'disabled'
+        if stems == 'auto': stems = 'disabled'
         py = rt.runtime_python()
         override = settings.get('whisper_python')
         if override: py = str(resolve_dir(self.root, override))
         cmd = [py, str(rt.WHISPER_SCRIPT), *[i['path'] for i in items],
                '--outdir', str(resolve_dir(self.root, settings['whisper_out_dir'])),
-               '--model', settings['whisper_model'], '--backend', 'faster',
+               '--model', settings['whisper_model'], '--backend', 'auto',
                '--device', settings['whisper_device'], '--language', settings['whisper_language'],
                '--audio-stream', settings['whisper_audio_stream'],
                *(['--series-project',settings['series_project']] if settings.get('series_project') else []),
-               '--stems' if stems == 'enabled' else '--no-stems']
+               *(['--stems'] if settings['whisper_demucs_mode']=='enabled' else ['--no-stems'] if settings['whisper_demucs_mode']=='disabled' else ['--no-stems'] if settings['whisper_model']=='large-v3-turbo' else ['--auto-stems'])]
         def line(text):
             self.log(text)
             if not text.startswith('[RESULT] '): return
@@ -364,11 +368,11 @@ class Pipeline:
 
         if operation in ('auto', 'translate'):
             self.events.put(('item', item['id'], {'stage': 'Preparando tradutor', 'progress': 0}))
-            if not rt._ensure_ollama_ready(log_fn=self.log, required_model='translategemma:12b',
+            if not rt._ensure_ollama_ready(log_fn=self.log, required_model=settings['ollama_model'],
                                             cancel_event=self.cancelled):
                 raise RuntimeError('Não foi possível preparar o TranslateGemma no Ollama.')
             run([py, str(rt.OLLAMA_SCRIPT), str(translation_source), '--outdir', out('ollama_out_dir'),
-                 '--model', 'translategemma:12b', '--review', settings['review_mode'], '--show-passes'],
+                 '--model', settings['ollama_model'], '--review', settings['review_mode'], '--show-passes'],
                 'Traduzindo para português')
             translated = confirmed.get(('translation', path_key(translation_source)))
             if not translated or not Path(translated).is_file():
@@ -409,15 +413,15 @@ class Pipeline:
             raise RuntimeError('Cancelado')
         stems = settings['whisper_demucs_mode']
         if stems == 'auto':
-            stems = 'enabled' if settings['whisper_model'] == 'large-v3' else 'disabled'
+            stems = 'disabled'
         override = settings.get('whisper_python')
         whisper_py = str(resolve_dir(self.root, override)) if override else py
         run([whisper_py, str(rt.WHISPER_SCRIPT), str(source), '--outdir', str(resolve_dir(self.root, settings['whisper_out_dir'])),
-             '--model', settings['whisper_model'], '--backend', 'faster',
+             '--model', settings['whisper_model'], '--backend', 'auto',
              '--device', settings['whisper_device'], '--language', settings['whisper_language'],
              '--audio-stream', settings['whisper_audio_stream'],
              *(['--series-project',settings['series_project']] if settings.get('series_project') else []),
-             '--stems' if stems == 'enabled' else '--no-stems'], 'Transcrevendo áudio')
+             *(['--stems'] if settings['whisper_demucs_mode']=='enabled' else ['--no-stems'] if settings['whisper_demucs_mode']=='disabled' else ['--no-stems'] if settings['whisper_model']=='large-v3-turbo' else ['--auto-stems'])], 'Transcrevendo áudio')
         translated_input = confirmed.get(('transcription', path_key(source)))
         if not translated_input or not Path(translated_input).is_file():
             raise RuntimeError('O Whisper não confirmou a saída desta execução.')

@@ -129,8 +129,8 @@ Em **Configurações**, abra **Recursos, modelos, limpeza e conclusão**. O mesm
 
 ### Recursos
 
-- **Threads da CPU:** `0` mantém a escolha automática; um número positivo, até o número de processadores lógicos disponível, limita os trabalhadores do Faster-Whisper, as bibliotecas numéricas, o OCR ONNX e os pedidos ao Ollama. As variáveis são passadas aos subprocessos, sem mudar o ambiente global do Windows. Não é uma limitação percentual de uso da CPU e nem todos os codecs usam esses controles.
-- **Camadas da tradução na GPU:** `-1` mantém a escolha automática do Ollama; `0` solicita tradução na CPU; valores positivos definem quantas camadas podem ser enviadas à GPU. Não é um teto exato de VRAM. O controle é da tradução; o dispositivo CPU/CUDA do Whisper continua nas configurações existentes, e a GPU do Demucs não recebe um limite percentual.
+- **Threads da CPU:** `0` mantém a escolha automática; um número positivo, até o número de processadores lógicos disponível, limita o processamento auxiliar dos trabalhadores do Faster-Whisper, as bibliotecas numéricas e os pedidos ao Ollama. As variáveis são passadas aos subprocessos, sem mudar o ambiente global do Windows. Não é uma limitação percentual de uso da CPU e nem todos os codecs usam esses controles.
+- **GPU obrigatória:** os pedidos de tradução exigem todas as camadas na GPU. O antigo controle de camadas foi removido para impedir inferência em CPU ou mista. Se faltar VRAM, libere memória ou escolha um modelo menor.
 - **Prioridade reduzida:** trabalhadores novos usam prioridade abaixo do normal no Windows. O Studio também ajusta a prioridade de seu próprio servidor Ollama, quando existente; servidores externos não são alterados.
 
 Use **Aplicar controles** antes de iniciar outro trabalho. Os modelos, quantização, precisão e tamanho de contexto continuam iguais. Reduzir recursos pode aumentar o tempo de processamento. Mudanças nessas opções também separam as amostras usadas na estimativa de duração da fila.
@@ -250,3 +250,45 @@ Nas telas **Início**, **Episódios** e **Tradução**, ative **Visual padrão s
 Para legendas já prontas, abra **Resultados** e use **Aplicar padrão streaming na pasta**, escolhendo a pasta das legendas da temporada. Para um único arquivo, selecione-o na lista e clique em **Aplicar padrão streaming**. Não há retradução. Textos e tempos são preservados; os arquivos existentes não são substituídos. Repetir a operação reutiliza uma cópia ainda válida.
 
 Em ASS existente, somente falas comuns recebem os comandos de fonte e contorno; placas posicionadas, desenhos, músicas e efeitos identificados são preservados. A fonte Trebuchet MS deve existir no reprodutor. Os controles de fonte/tamanho da Revisão continuam disponíveis para ajustes avançados, mas não são necessários neste fluxo.
+
+
+### Modelos e memória na preparação
+
+Em **Preparar para começar**, escolha **Usar este modelo** e **Baixar modelo** para o TranslateGemma 4B, 12B ou 27B. Apenas o modelo escolhido precisa ser baixado. O 12B continua como padrão; a seleção é salva e vale também para retradução e sugestões do glossário.
+
+| Modelo Q4_K_M | Download aproximado | VRAM estimada, contexto curto | Capacidade recomendada |
+|---|---|---|---|
+| 4B | 3,3 GB | 4–6 GB | 6 GB ou mais |
+| 12B | 8,1 GB | 10–12 GB | 12 GB ou mais |
+| 27B | 17 GB | 20–24 GB | 24 GB ou mais |
+
+As faixas de VRAM são estimativas de planejamento, não benchmarks nem limites garantidos. Contexto, lote e memória ocupada por outros processos afetam o consumo. Inferência em CPU ou dividida com CPU é bloqueada: libere VRAM ou selecione um modelo menor. Os exemplos de NVIDIA, AMD e Intel na tela indicam capacidade; AMD/Intel ainda precisam de validação no projeto. A seleção de tradução não muda o suporte do Whisper. Fontes: [modelos oficiais](https://ollama.com/library/translategemma), [compatibilidade do Ollama](https://docs.ollama.com/gpu).
+
+
+### GPU obrigatória e Vulkan
+
+A IA exige GPU. No Whisper, **Automático** escolhe CUDA quando disponível e Vulkan nas outras máquinas; também é possível escolher CUDA ou Vulkan em Configurações. Prepare o modelo correspondente em **Preparar para começar**: os formatos CUDA e Vulkan são diferentes. Não há conversão ou download de modelo diferente silenciosamente. Os downloads Vulkan incluem um runtime portátil fixado por SHA256 e modelos oficiais de mesma variante.
+
+O Ollama gerenciado habilita Vulkan e oculta CUDA/HIP/ROCm quando CUDA não está disponível. Antes de enviar texto de tradução ou glossário, uma carga sem prompt verifica que o modelo inteiro está residente na GPU usando `/api/ps`. Cargas CPU ou mistas são rejeitadas e descarregadas; pedidos de inferência exigem todas as camadas na GPU. Servidores externos também precisam passar pela verificação.
+
+O Whisper Vulkan mantém um servidor local apenas em 127.0.0.1, verifica o backend carregado antes de enviar áudio e reutiliza o modelo no lote. Falhas CUDA não tentam CPU. Demucs exige CUDA nesta distribuição; quando explicitamente solicitado em Vulkan, a execução é bloqueada. No modo automático Vulkan, usa-se áudio original. OCR com motor CPU e Silero VAD via ONNX CPU estão desabilitados. Esta mudança no VAD pode alterar segmentação e exige revisão dos resultados; os filtros não neurais de qualidade e as novas tentativas CUDA continuam ativos.
+
+Interface, FFmpeg, espectrogramas, leitura de arquivos e amostragem de tokens ainda usam CPU como trabalho auxiliar. GPU obrigatória significa inferência pesada dos modelos na GPU, não ausência de uso do processador. Vulkan depende de driver e recursos da placa; não é uma promessa de suporte a qualquer GPU. AMD e Intel precisam de testes físicos para confirmar compatibilidade.
+
+O motor Vulkan aplica os filtros não neurais de texto, tempos e alucinações e registra auditoria de qualidade. Alinhamento por palavras e novas tentativas adaptativas do Faster-Whisper ainda não estão disponíveis nesse motor; a auditoria registra essas capacidades explicitamente.
+
+
+### Escolha do Whisper por memória
+
+Em **Preparar para começar**, há seis modelos multilíngues com **Usar este modelo**, download CUDA para NVIDIA e download Vulkan para placas compatíveis. A escolha também aparece em **Configurações → Modelo Whisper**.
+
+| Modelo | Download aproximado | VRAM estimada (FP16, uma transcrição) | Capacidade recomendada |
+|---|---|---|---|
+| Tiny | 0,08 GB | 1–2 GB | 3 GB |
+| Base | 0,15 GB | 1–2 GB | 3 GB |
+| Small | 0,49 GB | 2–3 GB | 4 GB |
+| Medium | 1,53 GB | 3–5 GB | 6 GB |
+| Large v3 Turbo | 1,63 GB | 3–6 GB | 8 GB |
+| Large v3 | 3,1 GB | 5–10 GB | 12 GB |
+
+As faixas são estimativas conservadoras para os motores do projeto, não medições em todas as placas nem mínimos garantidos. O [Whisper original](https://github.com/openai/whisper#available-models-and-languages) e o [Faster-Whisper](https://github.com/SYSTRAN/faster-whisper#benchmark) apresentam consumos diferentes; backend, driver, alinhamento, lote e separação de voz alteram a necessidade. A tela exibe exemplos de NVIDIA, AMD e Intel por capacidade; suporte real e velocidade precisam ser validados em cada placa. Essas recomendações não incluem Demucs nem a memória do TranslateGemma. Tiny/Base consomem menos memória, mas tendem a reconhecer pior falas difíceis de animes. Large v3 continua a opção mais completa; Turbo é uma opção de velocidade mesmo em PCs fortes.

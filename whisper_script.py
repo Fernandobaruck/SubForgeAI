@@ -217,18 +217,9 @@ def _find_whispercpp_cli(root: Path) -> Path | None:
 
 
 def _whispercpp_model_path(root: Path, model_name: str) -> Path | None:
-    # modelos whispercpp normalmente ficam em models/whispercpp/*.bin
-    base = root / "models" / "whispercpp"
-    if not base.exists():
-        return None
-    # tenta casar por nome
-    normalized = model_name.strip().lower().replace("/", "-")
-    for p in base.glob("*.bin"):
-        if normalized in p.name.lower():
-            return p
-    # fallback: pega qualquer .bin
-    any_bin = next(base.glob("*.bin"), None)
-    return any_bin
+    from studio_ui.vulkan_support import model_path
+    path = model_path(root, model_name)
+    return path if path.is_file() else None
 
 
 def ffmpeg_extract_wav(inp: Path, out_wav: Path, stream_index: int | None = None) -> int:
@@ -528,13 +519,8 @@ def _build_faster_kwargs(
         "beam_size": beam_size,
         "best_of": best_of,
         "patience": patience,
-        "vad_filter": bool(vad_filter),
+        "vad_filter": False,
     }
-    if vad_filter:
-        kwargs["vad_parameters"] = {
-            "min_silence_duration_ms": int(vad_min_silence_ms),
-            "threshold": float(vad_threshold),
-        }
     return kwargs
 
 
@@ -586,6 +572,9 @@ def run_demucs(
     project_root: Path,
 ) -> tuple[Path | None, str]:
     """Run Demucs (two-stems=vocals). Returns (vocals_path or None, message)."""
+    from studio_ui.gpu_policy import cuda_available
+    if prefer_device == "cpu" or not cuda_available():
+        return None, "GPU obrigatória: Demucs exige CUDA nesta instalação; CPU bloqueada."
     env = os.environ.copy()
     cache_root = project_root / "cache"
     try:
@@ -614,7 +603,7 @@ def run_demucs(
         ]
 
     last_msg = ""
-    for dev in (prefer_device, "cpu"):
+    for dev in ("cuda",):
         try:
             p = subprocess.run(_cmd(dev), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, env=env)
             if p.returncode == 0:
@@ -666,46 +655,33 @@ def _safe_rmtree(d: Path, *, retries: int = 8, delay: float = 0.25) -> bool:
             break
     return False
 
-def _pick_torch_device(dev: str) -> str:
-    dev = (dev or "").strip().lower()
-    if dev == "auto":
-        dev = "cuda"
-    if dev == "cuda":
-        try:
-            import torch  # type: ignore
-            if torch.cuda.is_available():
-                return "cuda"
-        except Exception:
-            pass
-        return "cpu"
-    return "cpu"
+def _pick_torch_device(device: str) -> str:
+    from studio_ui.gpu_policy import cuda_available, GPURequiredError
+    if device == 'cpu' or not cuda_available(): raise GPURequiredError('GPU CUDA obrigatória para este backend.')
+    return 'cuda'
 
 
-def _run_whispercpp(whisper_cli: Path, model_bin: Path, audio_wav: Path, out_prefix: Path, lang: str, force_cpu: bool) -> tuple[bool, str]:
-    # whisper-cli -m model.bin -f input.wav -of outprefix -osrt -l ja
-    cmd = [
-        str(whisper_cli),
-        "-m",
-        str(model_bin),
-        "-f",
-        str(audio_wav),
-        "-of",
-        str(out_prefix),
-        "-osrt",
-    ]
-    if lang and lang not in ("auto", "automatic"):
-        cmd += ["-l", lang]
-    if force_cpu:
-        cmd += ["--no-gpu"]
+_VULKAN_SERVER = None
 
+
+def _run_whispercpp(whisper_cli: Path, model_bin: Path, audio_wav: Path, out_prefix: Path, lang: str, force_cpu: bool, task='transcribe', prompt='') -> tuple[bool, str]:
+    global _VULKAN_SERVER
+    from studio_ui.gpu_policy import GPURequiredError
+    from studio_ui.vulkan_support import VulkanWhisper, probe
+    if force_cpu: raise GPURequiredError('GPU obrigatória: Whisper em CPU foi desativado.')
+    root = whisper_cli.parent.parent.parent
     try:
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-        out = p.stdout.strip()
-        result_path = Path(str(out_prefix) + ".srt")
-        ok = (p.returncode == 0) and result_path.exists() and "-->" in result_path.read_text(encoding="utf-8", errors="replace")
-        return ok, out
-    except Exception as e:
-        return False, f"[ERRO] whispercpp falhou: {e}"
+        if _VULKAN_SERVER is None:
+            import atexit
+            _VULKAN_SERVER = VulkanWhisper(root, model_bin, probe(root))
+            atexit.register(_VULKAN_SERVER.close)
+        result = _VULKAN_SERVER.transcribe(audio_wav, lang, task, prompt)
+        from pipeline_io import atomic_write_text
+        atomic_write_text(Path(str(out_prefix)+'.srt'),result)
+        return True, '[GPU] Transcrição concluída com Whisper Vulkan.'
+    except Exception as exc:
+        if _VULKAN_SERVER is not None: _VULKAN_SERVER.close(); _VULKAN_SERVER=None
+        return False, '[ERRO] '+str(exc)
 
 
 def _read_wav_mono_samples(wav_path: Path) -> tuple[int, array] | tuple[None, None]:
@@ -1818,9 +1794,9 @@ def main():
         default="faster",
         choices=["auto", "faster", "torch", "whispercpp"],
         help="Backend: faster (Faster-Whisper/CTranslate2), torch (openai-whisper) ou whispercpp (binário). "
-             "auto tenta faster e cai para whispercpp/torch",
+             "auto escolhe Faster-Whisper CUDA ou whisper.cpp Vulkan; CPU é bloqueada",
     )
-    parser.add_argument("--device", default="cuda", choices=["auto", "cuda", "gpu", "cpu"], help="Device (auto/cuda/gpu/cpu).")
+    parser.add_argument("--device", default="auto", choices=["auto", "cuda", "gpu", "vulkan", "cpu"], help="GPU obrigatória: auto/cuda/vulkan. CPU é rejeitada.")
     parser.add_argument("--lang", default="", help="Idioma (ex: ja, en). Vazio/auto = auto")
     parser.add_argument("--language", default=None, help="(alias) Igual --lang")
     parser.add_argument("--series-project", default="", help="Anime cadastrado no Studio para vocabulário confirmado.")
@@ -1838,6 +1814,7 @@ def main():
     # Optional: stems (Demucs voice separation). Default: disabled.
     parser.add_argument("--stems", dest="stems", action="store_true", help="Ativa separação de voz (Demucs) antes do Whisper.")
     parser.add_argument("--no-stems", dest="stems", action="store_false", help="Desativa separação de voz (Demucs).")
+    parser.add_argument("--auto-stems", action="store_true", help="Demucs automático apenas em CUDA para Large v3.")
     parser.set_defaults(stems=None)
 
     args = parser.parse_args()
@@ -1852,9 +1829,13 @@ def main():
     dev_req = (args.device or "").strip().lower()
     if dev_req == "gpu":
         dev_req = "cuda"
-    if dev_req not in ("auto", "cuda", "cpu"):
-        dev_req = "auto"
+    from studio_ui.gpu_policy import inference_device
+    try: dev_req = inference_device(dev_req)
+    except RuntimeError as exc:
+        print('[ERRO] '+str(exc)); return 6
 
+    if args.auto_stems and args.stems is None:
+        args.stems = args.model == 'large-v3' and dev_req == 'cuda'
     # stems (Demucs) toggle: CLI > env > default False
     stems_enabled = False
     try:
@@ -1882,7 +1863,13 @@ def main():
     root = _find_project_root(Path(__file__).resolve().parent)
     APP_DIR = root
 
-    backend = (args.backend or "").strip().lower()
+    if args.backend == "whispercpp": dev_req = "vulkan"
+    backend = 'whispercpp' if dev_req == 'vulkan' else 'faster'
+    if dev_req == 'vulkan' and stems_enabled:
+        if args.stems is True:
+            print('[ERRO] Demucs solicitado, mas esta instalação exige CUDA para separar voz. Desative Demucs para usar Whisper Vulkan.'); return 6
+        print('[INFO] Demucs indisponível em Vulkan; usando áudio original, sem inferência em CPU.')
+        stems_enabled = False
 
     # whispercpp discovery (lazy)
     whisper_cli = None
@@ -1922,7 +1909,7 @@ def main():
             else:
                 use_torch = True
 
-    # Device efetivo (intenção; faster tem fallback CUDA->CPU)
+    # Device verified before model load; no inference fallback to CPU.
     if dev_req == "auto":
         dev_eff = "cuda"
     else:
@@ -1951,22 +1938,8 @@ def main():
             _configure_hf_cache(root)
             from faster_whisper import WhisperModel  # type: ignore
         except Exception as e:
-            print(f"[WARN] faster_whisper não está disponível ({e}). Tentando fallback para torch...")
-            use_faster = False
-            use_torch = True
-            try:
-                import whisper  # type: ignore
-            except Exception as e2:
-                print(f"[ERRO] whisper (torch) também não está disponível: {e2}")
-                return 6
-
-            eff_device = _pick_torch_device(dev_eff)
-            print(f"[INFO] Backend efetivo: torch | device efetivo: {eff_device}")
-            try:
-                model = whisper.load_model(args.model, device=eff_device)
-            except Exception as e3:
-                print(f"[ERRO] Falha ao carregar modelo Whisper (torch): {e3}")
-                return 6
+            print(f'[ERRO] Faster-Whisper CUDA indisponível: {e}. Inferência em CPU bloqueada.')
+            return 6
         else:
             compute_type = "float16" if dev_eff == "cuda" else "int8"
             if dev_eff == "cuda":
@@ -1983,17 +1956,8 @@ def main():
                 model = _create_faster(dev_eff, compute_type)
                 faster_device_used = dev_eff
             except Exception as e:
-                if dev_eff == "cuda":
-                    print(f"[WARN] CUDA indisponível/ falhou no Faster-Whisper ({e}). Fallback para CPU...")
-                    try:
-                        model = _create_faster("cpu", "int8")
-                        faster_device_used = "cpu"
-                    except Exception as e2:
-                        print(f"[ERRO] Falha ao iniciar Faster-Whisper também em CPU: {e2}")
-                        return 6
-                else:
-                    print(f"[ERRO] Falha ao iniciar Faster-Whisper: {e}")
-                    return 6
+                print(f'[ERRO] Falha ao iniciar Faster-Whisper CUDA: {e}. Libere VRAM; CPU bloqueada.')
+                return 6
 
     else:
         print(f"[INFO] Backend efetivo: whispercpp | cli: {whisper_cli} | model: {cpp_model}")
@@ -2121,13 +2085,30 @@ def main():
                     print("[STEP 2/2] Rodando whispercpp...")
                     out_prefix = srt_path.with_suffix("")
                     force_cpu = (str(dev_eff).strip().lower() == "cpu")
-                    ok, msg = _run_whispercpp(whisper_cli, cpp_model, audio_for_whisper, out_prefix, (file_language or "auto"), force_cpu=force_cpu)
+                    ok, msg = _run_whispercpp(whisper_cli, cpp_model, audio_for_whisper, out_prefix, (file_language or "auto"), force_cpu=force_cpu, task=args.task, prompt=hotwords)
                     print(msg)
                     if not ok:
                         overall_ok = False
                         continue
 
                     srt_path = Path(str(out_prefix) + ".srt")
+                    from ollama_script import parse_srt
+                    from review_workspace import seconds
+                    native_segments = []
+                    for _, timing, text in parse_srt(srt_path.read_text(encoding='utf-8')):
+                        start, end = (seconds(value.strip()) for value in timing.split('-->'))
+                        if start is None or end is None: raise ValueError('Whisper Vulkan devolveu tempos inválidos.')
+                        native_segments.append(dict(start=start,end=end,text=text))
+                    segs = filter_segments({'segments':native_segments,'audio_total':wav_total})
+                    if not segs: raise ValueError('Whisper Vulkan não produziu falas válidas após a validação.')
+                    write_srt(srt_path,segs)
+                    audit = dict(source_file=str(inp),duration_seconds=wav_total,device='vulkan',model=args.model,
+                        model_source=str(cpp_model),audio_stream=selected_index,language=file_language or 'auto',
+                        task=args.task,demucs_used=False,confirmed_series_terms=len(series_context.explicit),
+                        review_findings=transcription_findings(segs,file_language or 'auto'),segments=segs,
+                        capabilities=dict(word_alignment=False,adaptive_retries=False))
+                    atomic_write_text(Path(str(srt_path)+'.transcription.json'),json.dumps(audit,ensure_ascii=False,indent=2))
+                    print(f"[QUALITY] {len(audit['review_findings'])} bloco(s) sinalizados; auditoria: {srt_path}.transcription.json")
                     write_context(srt_path,inp,series_context.explicit,speech_terms,series_project=args.series_project)
 
                     if args.save_txt:
@@ -2199,34 +2180,7 @@ def main():
                             progress_state=progress_state,
                         )
                     except Exception as e:
-                        if faster_device_used == "cuda":
-                            print(f"[WARN] Falha durante transcrição em CUDA ({e}). Tentando fallback CPU...")
-                            try:
-                                from faster_whisper import WhisperModel  # type: ignore
-
-                                model_cpu = WhisperModel(model_source, device="cpu", compute_type="int8",cpu_threads=int(os.environ.get("SUBFORGEAI_CPU_THREADS","0")))
-                                segments, info = _drop_unsupported_kwargs(
-                                    lambda **kw: model_cpu.transcribe(str(audio_for_whisper), **kw),
-                                    fw_kwargs,
-                                )
-                                progress_state = {"last_pct": -1.0, "last_print": 0.0}
-                                seg_list = _transcribe_segments_to_list(
-                                    segments,
-                                    offset_sec=0.0,
-                                    wav_total=wav_total,
-                                    progress_state=progress_state,
-                                )
-                                print("[INFO] Fallback CPU concluído com sucesso.")
-                                model = model_cpu
-                                faster_device_used = "cpu"
-                            except Exception as e2:
-                                print(f"[ERRO] Falha também no fallback CPU: {e2}")
-                                overall_ok = False
-                                continue
-                        else:
-                            print(f"[ERRO] Falha na transcrição (faster): {e}")
-                            overall_ok = False
-                            continue
+                        raise RuntimeError(f'Falha durante inferência CUDA: {e}. CPU bloqueada; tente liberar VRAM.') from e
 
                     detected_language = getattr(info, 'language', None)
                     fw_lang = fw_lang or detected_language

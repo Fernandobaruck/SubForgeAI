@@ -94,10 +94,8 @@ def text_lines(image):
 
 class Reader:
     def __init__(self):
-        from rapidocr import RapidOCR
-        from maintenance_tools import resources
-        threads=resources({'resource_cpu_threads':os.environ.get('SUBFORGEAI_CPU_THREADS','0')})['resource_cpu_threads'] or 4
-        self.engine=RapidOCR(params={"Global.log_level":"error", "EngineConfig.onnxruntime.intra_op_num_threads":threads,"EngineConfig.onnxruntime.inter_op_num_threads":1})
+        from studio_ui.gpu_policy import GPURequiredError
+        raise GPURequiredError("OCR indisponível: o motor instalado usa CPU. A política exige um motor OCR com aceleração GPU validada.")
 
     def recognize(self,image):
         import cv2

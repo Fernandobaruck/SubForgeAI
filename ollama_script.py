@@ -314,11 +314,13 @@ def _ollama_call(model: str, messages: list[dict]) -> str:
     chat_url = f"{base}/api/chat"
     gen_url = f"{base}/api/generate"
 
+    from studio_ui.gpu_policy import ensure_ollama_gpu
+    ensure_ollama_gpu(base, model)
     options = dict(OLLAMA_OPTIONS)
     from maintenance_tools import resources
     limits=resources({'resource_cpu_threads':os.environ.get('SUBFORGEAI_CPU_THREADS','0'),'resource_gpu_layers':os.environ.get('SUBFORGEAI_GPU_LAYERS','-1')})
     if limits['resource_cpu_threads']:options['num_thread']=limits['resource_cpu_threads']
-    if limits['resource_gpu_layers']>=0:options['num_gpu']=limits['resource_gpu_layers']
+    options['num_gpu'] = 999  # All layers; CPU/mixed residency is rejected before generation.
     if _is_translategemma(model):
         options.update(num_ctx=4096, num_predict=2048, temperature=0.0, repeat_penalty=1.0)
     result = _ollama_stream(chat_url, {"model": model, "messages": messages, "options": options, "keep_alive": "2m"})

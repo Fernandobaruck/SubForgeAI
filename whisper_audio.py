@@ -57,12 +57,15 @@ def inspect_audio(path, ffprobe, language=None, selection='auto'):
     return choose_stream(json.loads(result.stdout).get('streams',[]),language,selection)
 
 
+WHISPER_REPOSITORIES = {name: 'Systran/faster-whisper-'+name
+    for name in ('tiny','base','small','medium','large-v3')}
+WHISPER_REPOSITORIES['large-v3-turbo'] = 'mobiuslabsgmbh/faster-whisper-large-v3-turbo'
+
+
 def local_faster_model(model, root):
     supplied=Path(model)
     if supplied.is_dir(): return str(supplied.resolve())
-    repositories={'large-v3':'Systran/faster-whisper-large-v3',
-                  'large-v3-turbo':'mobiuslabsgmbh/faster-whisper-large-v3-turbo'}
-    repository=repositories.get(model)
+    repository=WHISPER_REPOSITORIES.get(model)
     if not repository: return model
     store=Path(root)/'cache/hub'/('models--'+repository.replace('/','--'))
     snapshots=store/'snapshots'

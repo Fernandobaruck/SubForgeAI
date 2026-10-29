@@ -32,14 +32,12 @@ Dialog {
                 SettingRow {Layout.fillWidth:true;title:Tr.tr("Threads da CPU");description:Tr.tr("0 usa a escolha automática. O limite é aplicado aos trabalhadores de transcrição, bibliotecas numéricas e pedidos ao Ollama.")
                     TextField {id:threads;objectName:"resourceThreads";text:String(Backend.settings.resource_cpu_threads);validator:IntValidator {bottom:0;top:maintenance.maxCpuThreads} enabled:!Backend.busy;color:Theme.text;padding:12;implicitWidth:150;background:Rectangle {color:Theme.card;border.color:Theme.line}}
                 }
-                SettingRow {Layout.fillWidth:true;title:Tr.tr("Camadas da tradução na GPU");description:Tr.tr("-1 automático; 0 usa CPU; valores positivos limitam as camadas enviadas à GPU. Não é um percentual de VRAM e não limita a GPU do Whisper/Demucs.")
-                    TextField {id:layers;objectName:"resourceLayers";text:String(Backend.settings.resource_gpu_layers);validator:IntValidator {bottom:-1;top:100} enabled:!Backend.busy;color:Theme.text;padding:12;implicitWidth:150;background:Rectangle {color:Theme.card;border.color:Theme.line}}
-                }
+                Text {text:Tr.tr("GPU obrigatória: todas as camadas da tradução devem caber na GPU. Se faltar VRAM, escolha um modelo menor; inferência em CPU ou dividida com CPU será bloqueada.");Layout.fillWidth:true;wrapMode:Text.Wrap;color:Theme.accent}
                 CheckBox {id:background;objectName:"resourceBackground";text:Tr.tr("Executar trabalhadores com prioridade reduzida no Windows");checked:Backend.settings.resource_background;enabled:!Backend.busy;palette.windowText:Theme.text}
-                ActionButton {objectName:"applyResources";text:Tr.tr("Aplicar controles");primary:true;enabled:!Backend.busy && threads.acceptableInput && layers.acceptableInput
-                    onClicked:{var cpu=Number(threads.text);var gpu=Number(layers.text);var bg=background.checked;Backend.updateSetting("resource_cpu_threads",cpu);Backend.updateSetting("resource_gpu_layers",gpu);Backend.updateSetting("resource_background",bg)}
+                ActionButton {objectName:"applyResources";text:Tr.tr("Aplicar controles");primary:true;enabled:!Backend.busy && threads.acceptableInput
+                    onClicked:{var cpu=Number(threads.text);var bg=background.checked;Backend.updateSetting("resource_cpu_threads",cpu);Backend.updateSetting("resource_background",bg)}
                 }
-                Text {text:Tr.tr("O dispositivo CPU/CUDA do Whisper continua em Configurações. Um servidor Ollama externo mantém sua própria prioridade.");color:Theme.muted;Layout.fillWidth:true;wrapMode:Text.Wrap}
+                Text {text:Tr.tr("O motor CUDA/Vulkan do Whisper pode ser escolhido em Configurações. A CPU continua responsável pela interface e preparação dos arquivos.");color:Theme.muted;Layout.fillWidth:true;wrapMode:Text.Wrap}
                 Item {Layout.fillHeight:true}
             }
             ColumnLayout {

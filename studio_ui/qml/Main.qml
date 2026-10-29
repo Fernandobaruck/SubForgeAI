@@ -79,7 +79,7 @@ ApplicationWindow {
                 Layout.fillWidth: true; height: 76; radius: 9; color: Theme.card; border.color: Theme.line
                 Column { anchors.fill: parent; anchors.margins: 12; spacing: 7
                     Text { text: Tr.tr("TRADUÇÃO LOCAL"); color: Theme.green; font.pixelSize: 9; font.letterSpacing: 1.3 }
-                    Text { text: "TranslateGemma 12B"; color: Theme.text; font.pixelSize: 12 }
+                    Text { text: "TranslateGemma " + Backend.settings.ollama_model.split(":")[1].toUpperCase(); color: Theme.text; font.pixelSize: 12 }
                     Text { text: Tr.tr("Seus arquivos no seu computador"); color: Theme.muted; font.pixelSize: 9 }
                 }
             }
@@ -252,7 +252,7 @@ ApplicationWindow {
                     Layout.fillWidth: true; height: 140; color: Theme.card; radius: 12; border.color: Theme.line
                     Column { anchors.fill: parent; anchors.margins: 24; spacing: 9
                         Text { text: Tr.tr("TRADUÇÃO COM CONTEXTO"); color: Theme.accent; font.pixelSize: 10; font.letterSpacing: 1.4 }
-                        Text { text: "TranslateGemma 12B"; color: Theme.text; font.family: Theme.display; font.pixelSize: 27 }
+                        Text { text: "TranslateGemma " + Backend.settings.ollama_model.split(":")[1].toUpperCase(); color: Theme.text; font.family: Theme.display; font.pixelSize: 27 }
                         Text { text: Tr.tr("Português do Brasil · modelo local quantizado · glossário e memória por série"); color: Theme.muted; font.pixelSize: 12 }
                         Text { text: Tr.tr("Arquivos de vídeo precisam de extração ou transcrição antes da tradução."); color: Theme.muted; font.pixelSize: 11 }
                     }
@@ -293,14 +293,14 @@ ApplicationWindow {
                 }
                 Text { Layout.fillWidth: true; text: Tr.tr("Idioma e tema podem ser alterados durante o processamento."); color: Theme.muted; font.pixelSize: 11; wrapMode: Text.WordWrap; Layout.bottomMargin: 18 }
                 Text { text: Tr.tr("TRANSCRIÇÃO"); color: Theme.accent; font.pixelSize: 11; font.letterSpacing: 1.5; Layout.bottomMargin: 8 }
-                SettingRow { Layout.fillWidth: true; title: Tr.tr("Modelo Whisper"); description: Tr.tr("Large v3 prioriza qualidade; Turbo prioriza velocidade.")
-                    SelectField { model: ["Large v3", "Large v3 Turbo"]; selectedIndex: Backend.settings.whisper_model === "large-v3" ? 0 : 1; enabled: !Backend.busy; onActivated: Backend.updateSetting("whisper_model", currentIndex ? "large-v3-turbo" : "large-v3") }
+                SettingRow { Layout.fillWidth: true; title: Tr.tr("Modelo Whisper"); description: Tr.tr("Tiny e Base são leves; Small e Medium são intermediários; Turbo prioriza velocidade; Large v3 prioriza reconhecimento.")
+                    SelectField { property var codes: ["tiny","base","small","medium","large-v3-turbo","large-v3"]; model: ["Tiny", "Base", "Small", "Medium", "Large v3 Turbo", "Large v3"]; selectedIndex: Math.max(0,codes.indexOf(Backend.settings.whisper_model)); enabled: !Backend.busy; onActivated: Backend.updateSetting("whisper_model", codes[currentIndex]) }
                 }
                 SettingRow { Layout.fillWidth: true; title: Tr.tr("Idioma do áudio"); description: Tr.tr("Para animes em japonês, informar o idioma evita uma detecção incorreta.")
                     SelectField { property var codes: ["auto","ja","en","pt","es","fr","de","it","ko","zh"]; model: [Tr.tr("Detectar automaticamente"), Tr.tr("Japonês"), Tr.tr("Inglês"), Tr.tr("Português"), Tr.tr("Espanhol"), Tr.tr("Francês"), Tr.tr("Alemão"), Tr.tr("Italiano"), Tr.tr("Coreano"), Tr.tr("Chinês")]; selectedIndex: Math.max(0, codes.indexOf(Backend.settings.whisper_language)); enabled: !Backend.busy; onActivated: Backend.updateSetting("whisper_language", codes[currentIndex]) }
                 }
-                SettingRow { Layout.fillWidth: true; title: Tr.tr("Dispositivo"); description: Tr.tr("CUDA utiliza sua GPU NVIDIA.")
-                    SelectField { property var codes: ["cuda","cpu","auto"]; model: [Tr.tr("GPU NVIDIA · CUDA"), Tr.tr("Processador · CPU"), Tr.tr("Automático")]; selectedIndex: Math.max(0, codes.indexOf(Backend.settings.whisper_device)); enabled: !Backend.busy; onActivated: Backend.updateSetting("whisper_device", codes[currentIndex]) }
+                SettingRow { Layout.fillWidth: true; title: Tr.tr("Dispositivo"); description: Tr.tr("GPU obrigatória: CUDA para NVIDIA; Vulkan para outras placas compatíveis.")
+                    SelectField { property var codes: ["auto","cuda","vulkan"]; model: [Tr.tr("Automático"), Tr.tr("GPU NVIDIA · CUDA"), "GPU · Vulkan"]; selectedIndex: Math.max(0, codes.indexOf(Backend.settings.whisper_device)); enabled: !Backend.busy; onActivated: Backend.updateSetting("whisper_device", codes[currentIndex]) }
                 }
                 SettingRow { Layout.fillWidth: true; title: Tr.tr("Faixa do áudio"); description: Tr.tr("auto prioriza japonês em animes. Um idioma explícito seleciona a faixa correspondente. Ou informe o índice global da stream.")
                     TextField { text: Backend.settings.whisper_audio_stream; enabled: !Backend.busy; implicitWidth: 235; color: Theme.text; font.pixelSize: 13; padding: 12
@@ -308,7 +308,7 @@ ApplicationWindow {
                         onEditingFinished: Backend.updateSetting("whisper_audio_stream", text)
                     }
                 }
-                SettingRow { Layout.fillWidth: true; title: Tr.tr("Separação de voz"); description: Tr.tr("O modo automático usa Demucs com Large v3 e dispensa a etapa com Turbo.")
+                SettingRow { Layout.fillWidth: true; title: Tr.tr("Separação de voz"); description: Tr.tr("O modo automático usa Demucs apenas com Large v3 em CUDA. Outros modelos e Vulkan usam o áudio original.")
                     SelectField { property var codes: ["auto","enabled","disabled"]; model: [Tr.tr("Automática"), Tr.tr("Ativada"), Tr.tr("Desativada")]; selectedIndex: Math.max(0, codes.indexOf(Backend.settings.whisper_demucs_mode)); enabled: !Backend.busy; onActivated: Backend.updateSetting("whisper_demucs_mode", codes[currentIndex]) }
                 }
                 ActionButton {objectName:"openMaintenance";text:Tr.tr("Recursos, modelos, limpeza e conclusão");onClicked:maintenanceDialog.open();Layout.topMargin:18}

@@ -39,12 +39,20 @@ function Download-File([string]$url, [string]$path, [long]$expected) {
     try {
         $buffer = New-Object byte[] (1024*1024)
         $done = $offset
+        $clock = [Diagnostics.Stopwatch]::StartNew()
+        $lastProgress = -250L
         while (($count = $inputStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
             if ($expected -gt 0 -and $done + $count -gt $expected) { throw 'Download maior que o tamanho esperado.' }
             if ($expected -eq 0 -and $done + $count -gt 1048576) { throw 'Manifesto maior que o limite permitido.' }
             $output.Write($buffer, 0, $count); $done += $count
-            if ($expected -gt 0) { Write-Progress -Activity 'Baixando aplicativo' -Status ([IO.Path]::GetFileName($path)) -PercentComplete ([Math]::Min(100, 100*$done/$expected)) }
+            # Rendering console progress on every network read can throttle fast downloads.
+            if ($expected -gt 0 -and $clock.ElapsedMilliseconds - $lastProgress -ge 250) {
+                $speed = ($done - $offset) / 1MB / [Math]::Max(0.001, $clock.Elapsed.TotalSeconds)
+                Write-Progress -Activity 'Baixando aplicativo' -Status ('{0} - {1:N1} MB/s' -f ([IO.Path]::GetFileName($path)), $speed) -PercentComplete ([Math]::Min(100, 100*$done/$expected))
+                $lastProgress = $clock.ElapsedMilliseconds
+            }
         }
+        if ($expected -gt 0) { Write-Progress -Activity 'Baixando aplicativo' -Completed }
         if ($expected -gt 0 -and $done -ne $expected) { throw 'Download incompleto. Abra Instalar.cmd novamente para retomar.' }
     } finally { $inputStream.Dispose(); $output.Dispose(); $response.Dispose() }
 }

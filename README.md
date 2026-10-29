@@ -4,11 +4,11 @@ Aplicativo para Windows voltado à criação e revisão de legendas de anime, co
 
 ## Baixar e começar
 
-**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.3/SubForgeAI-Instalar-1.0.3.zip)**
+**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.4/SubForgeAI-Instalar-1.0.4.zip)**
 
 [Ver todos os downloads e notas da versão](https://github.com/Fernandobaruck/SubForgeAI/releases/latest)
 
-1. Baixe **SubForgeAI-Instalar-1.0.3.zip**, extraia e abra **Instalar.cmd**.
+1. Baixe **SubForgeAI-Instalar-1.0.4.zip**, extraia e abra **Instalar.cmd**.
 2. Escolha uma pasta e aguarde. O instalador baixa, verifica e prepara o aplicativo sem pedir instalação de Python, Qt, Ollama ou FFmpeg à parte.
 3. No Studio, clique em **Preparar para começar** e baixe os modelos que deseja usar. Depois, adicione seus arquivos e inicie pela fila.
 
@@ -23,8 +23,8 @@ O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** in
 ## O que preciso?
 
 - Windows x64 e internet para a preparação inicial. O pacote e o instalador precisam de espaço temporário; o instalador verifica isso antes do download.
-- TranslateGemma 12B: cerca de **8,1 GB** adicionais. Whisper Turbo: cerca de **1,6 GB**; Large v3: cerca de **3,1 GB**. Você escolhe quais baixar.
-- A configuração de referência do projeto é **RTX 5070 12 GB e 32 GB de RAM**. Velocidade e aceleração variam com o hardware. Whisper/CTranslate2 usa CUDA em NVIDIA; aceleração em AMD não é garantida.
+- TranslateGemma 4B/12B/27B: cerca de **3,3 / 8,1 / 17 GB** adicionais; o 12B é o padrão. Whisper Turbo: cerca de **1,6 GB**; Large v3: cerca de **3,1 GB**. Você escolhe quais baixar.
+- A configuração de referência do projeto é **RTX 5070 12 GB e 32 GB de RAM**. Velocidade e aceleração variam com o hardware. Whisper usa CUDA em NVIDIA e oferece Vulkan para AMD/Intel compatíveis. A IA exige GPU: inferência em CPU é bloqueada. AMD e Intel ainda precisam de validação física.
 - O processamento é local após preparar os recursos necessários. A tradução de legendas gera português do Brasil. Revise os resultados antes de compartilhar.
 
 ## Visual padrão streaming

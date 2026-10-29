@@ -7,12 +7,16 @@ from urllib.parse import urlsplit
 from .online_glossary import text
 
 
-def suggest(base, source, language, cancel):
+def suggest(base, source, language, cancel, model="translategemma:12b"):
+    from .setup_support import TRANSLATION_MODELS
+    if model not in TRANSLATION_MODELS: raise ValueError("Modelo de tradução inválido.")
     parsed=urlsplit(base)
     if parsed.scheme not in ('http','https') or parsed.hostname not in ('localhost','127.0.0.1','::1') or parsed.username or parsed.password:
         raise ValueError('A sugestão de termos exige um Ollama local.')
+    from studio_ui.gpu_policy import ensure_ollama_gpu
+    ensure_ollama_gpu(base, model, cancel)
     prompt=f'You are a professional {"English (en)" if language=="en" else "Japanese (ja)"} to Brazilian Portuguese (pt-BR) translator. Translate only the following term. Preserve proper names. Produce only the translation, without explanations.\n\n{source}'
-    body=json.dumps({'model':'translategemma:12b','messages':[{'role':'user','content':prompt}],'stream':True,'options':{'temperature':0,'num_predict':256}}).encode()
+    body=json.dumps({'model':model,'messages':[{'role':'user','content':prompt}],'stream':True,'options':{'temperature':0,'num_predict':256,'num_gpu':999,'num_ctx':4096}}).encode()
     cls=http.client.HTTPSConnection if parsed.scheme=='https' else http.client.HTTPConnection
     connection=cls(parsed.hostname,parsed.port,timeout=10)
     finished=threading.Event();watcher=None;response=None

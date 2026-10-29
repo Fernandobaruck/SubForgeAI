@@ -175,13 +175,14 @@ class OnlineGlossaryController(QObject):
             self._ai=existing['target'];self.suggestionReady.emit(self._ai);self.changed.emit()
             self.review._notify('Este termo já tem tradução confirmada. A versão local foi preservada.');return
         self._ai='';self.suggestionReady.emit('');self.changed.emit();project=self._project
+        model=self.review.owner.settings['ollama_model']
         def work():
             from .glossary_ai import suggest
             runtime=self.review.owner.runtime
-            if not runtime._ensure_ollama_ready(required_model='translategemma:12b',cancel_event=self.review._cancel):
+            if not runtime._ensure_ollama_ready(required_model=model,cancel_event=self.review._cancel):
                 if self.review._cancel.is_set():raise ValueError('Consulta interrompida.')
                 raise ValueError('Prepare o TranslateGemma antes de pedir sugestões.')
-            return suggest(runtime.processes.OLLAMA_BASE_URL,source,language,self.review._cancel)
+            return suggest(runtime.processes.OLLAMA_BASE_URL,source,language,self.review._cancel,model)
         def done(value):
             if self.review._project==project:self._ai=value;self.suggestionReady.emit(value);self.changed.emit()
         self.review._submit('Sugerindo termo com IA local',work,done,True)

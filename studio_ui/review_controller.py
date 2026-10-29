@@ -240,16 +240,17 @@ class ReviewController(QObject):
             context=doc.source_context
             terms={**context.get('confirmed_terms',{}),**(self.registry.confirmed(doc.project) if doc.project else {})}
             write_context(path,context.get('source_file') or doc.source_path,terms,context.get('speech_terms'),context.get('uncertain_ranges'),source_kind='subtitle',series_project=doc.project or context.get('series_project'))
+        model=self.owner.settings['ollama_model']
         def work():
             rt=self.owner.runtime
-            if not rt._ensure_ollama_ready(log_fn=self.owner.pipeline.log,required_model='translategemma:12b',cancel_event=self._cancel):raise ValueError('Não foi possível preparar o TranslateGemma no Ollama.')
+            if not rt._ensure_ollama_ready(log_fn=self.owner.pipeline.log,required_model=model,cancel_event=self._cancel):raise ValueError('Não foi possível preparar o TranslateGemma no Ollama.')
             outputs={}
             def line(text):
                 self.owner.pipeline.log(text)
                 if text.startswith('[RESULT] '):
                     data=json.loads(text[9:])
                     if data.get('kind')=='translation' and str(Path(data['input']).resolve()) in inputs:outputs[inputs[str(Path(data['input']).resolve())]]=data['output']
-            rt.run_capture([rt.runtime_python(),str(rt.OLLAMA_SCRIPT),*inputs,'--outdir',str(folder/'translated'),'--model','translategemma:12b','--review','auto'],line,cwd=self.root,cancel_event=self._cancel)
+            rt.run_capture([rt.runtime_python(),str(rt.OLLAMA_SCRIPT),*inputs,'--outdir',str(folder/'translated'),'--model',model,'--review','auto'],line,cwd=self.root,cancel_event=self._cancel)
             import ollama_script as O
             proposals={}
             for i,path in outputs.items():

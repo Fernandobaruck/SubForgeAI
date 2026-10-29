@@ -127,7 +127,7 @@ class OnlineControllerTests(unittest.TestCase):
     def test_ai_never_changes_local_glossary_and_requires_complete_response(self):
         backend,online=self.backend();backend.runtime.processes=SimpleNamespace(OLLAMA_BASE_URL='http://127.0.0.1:11434')
         response=MagicMock(status=200);response.__iter__.return_value=iter([b'{"message":{"content":"Torre"}}',b'{"done":true}'])
-        with patch('studio_ui.glossary_ai.http.client.HTTPConnection') as connection:
+        with patch('studio_ui.gpu_policy.ensure_ollama_gpu'), patch('studio_ui.glossary_ai.http.client.HTTPConnection') as connection:
             connection.return_value.getresponse.return_value=response;online.suggest('Tower','en');self.wait(backend)
         self.assertEqual(online.aiSuggestion,'Torre');self.assertEqual(backend.review.terms,[])
         online.saveSuggestion('Tower','Torre');self.assertFalse(backend.review.terms[0]['confirmed'])
@@ -135,12 +135,12 @@ class OnlineControllerTests(unittest.TestCase):
         self.assertEqual(backend.review.registry.confirmed(self.project),{'Tower':'Confirmado'})
     def test_ai_refuses_non_local_endpoint(self):
         backend,online=self.backend();backend.runtime.processes=SimpleNamespace(OLLAMA_BASE_URL='https://example.com')
-        with patch('studio_ui.glossary_ai.http.client.HTTPConnection') as connection:online.suggest('Tower','en');self.wait(backend);connection.assert_not_called()
+        with patch('studio_ui.gpu_policy.ensure_ollama_gpu'), patch('studio_ui.glossary_ai.http.client.HTTPConnection') as connection:online.suggest('Tower','en');self.wait(backend);connection.assert_not_called()
         self.assertEqual(online.aiSuggestion,'')
     def test_incomplete_ai_response_is_not_presented_as_a_suggestion(self):
         backend,online=self.backend();backend.runtime.processes=SimpleNamespace(OLLAMA_BASE_URL='http://127.0.0.1:11434')
         response=MagicMock(status=200);response.__iter__.return_value=iter([b'{"message":{"content":"partial"}}'])
-        with patch('studio_ui.glossary_ai.http.client.HTTPConnection') as connection:
+        with patch('studio_ui.gpu_policy.ensure_ollama_gpu'), patch('studio_ui.glossary_ai.http.client.HTTPConnection') as connection:
             connection.return_value.getresponse.return_value=response;online.suggest('Tower','en');self.wait(backend)
         self.assertEqual(online.aiSuggestion,'');self.assertEqual(backend.review.terms,[])
     def test_history_excludes_style_and_subtitle_memory(self):
@@ -151,7 +151,7 @@ class OnlineControllerTests(unittest.TestCase):
         from studio_ui.glossary_ai import suggest
         import http.client
         cancel=threading.Event();shutdown=threading.Event()
-        with patch('studio_ui.glossary_ai.http.client.HTTPConnection') as cls:
+        with patch('studio_ui.gpu_policy.ensure_ollama_gpu'), patch('studio_ui.glossary_ai.http.client.HTTPConnection') as cls:
             connection=cls.return_value;connection.sock.shutdown.side_effect=lambda how:shutdown.set()
             def loading():
                 if not shutdown.wait(3):raise AssertionError('Cancellation did not interrupt socket')

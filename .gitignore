@@ -34,3 +34,6 @@ __pycache__/
 /tests/season_checkpoint_inventory.json
 /docs/history/
 /docs/validation/
+
+/models/
+/tools/whispercpp/

@@ -9,6 +9,9 @@ import ollama_script as O
 
 
 class RecoveryTests(unittest.TestCase):
+    def setUp(self):
+        mocked=patch("studio_ui.gpu_policy.ensure_ollama_gpu");mocked.start();self.addCleanup(mocked.stop)
+
     def response(self, lines):
         response = Mock(status_code=200)
         response.__enter__ = Mock(return_value=response)

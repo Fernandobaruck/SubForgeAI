@@ -39,7 +39,7 @@ Para vídeos, o Studio pode aproveitar legendas disponíveis ou transcrever o á
 
 - Windows x64. O pacote foi validado no ambiente Windows do projeto; outras configurações exigem teste.
 - A referência de desenvolvimento é uma NVIDIA RTX 5070 com 12 GB de VRAM e 32 GB de RAM. Isso não estabelece um mínimo obrigatório para todas as operações.
-- CPU pode ser mais lenta. Aceleração e memória disponíveis dependem do hardware e dos drivers. O Whisper com CTranslate2 utiliza CUDA em GPUs NVIDIA; não há promessa de aceleração equivalente em AMD.
+- A IA exige GPU. Whisper utiliza CUDA em NVIDIA e pode utilizar Vulkan em AMD/Intel compatíveis. Prepare o modelo do motor correspondente. Falta de GPU/VRAM bloqueia inferência; não há execução alternativa em CPU. AMD e Intel ainda precisam de testes físicos.
 - Depois de preparar os recursos necessários, o processamento dos arquivos é local. Consultar atualizações e baixar recursos exige internet.
 - As saídas de IA precisam de revisão humana, especialmente nomes, contexto e falas difíceis.
 
@@ -51,7 +51,7 @@ Para vídeos, o Studio pode aproveitar legendas disponíveis ou transcrever o á
 | Windows mostra editor desconhecido/SmartScreen | O executável não tem assinatura Authenticode. Confirme que o download veio deste repositório e confira os hashes fornecidos; não desative o antivírus. |
 | Download interrompido | Execute o instalador novamente. Para modelos, repita o download no painel de preparação. |
 | Modelo não encontrado | Abra **Preparar para começar**, confira o estado e baixe o modelo necessário. |
-| Erro de CUDA ou falta de memória | Atualize o driver pelo fabricante, feche programas que ocupam VRAM ou teste CPU nas Configurações. |
+| Erro de CUDA ou falta de memória | Atualize o driver pelo fabricante, feche programas que ocupam VRAM ou escolha um TranslateGemma menor. Para AMD/Intel, prepare Whisper Vulkan e selecione Automático/Vulkan nas Configurações. |
 | Ollama demorou ou tradução parou | Confira Diagnóstico e o log; tente retomar o mesmo trabalho para aproveitar o checkpoint. |
 | Instalação incompleta | Extraia o instalador inteiro e instale em uma nova pasta. Não mova apenas o `.exe`. |
 

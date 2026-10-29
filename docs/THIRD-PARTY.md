@@ -12,3 +12,6 @@ O pacote portátil inclui componentes de terceiros para executar o aplicativo. S
 Modelos de tradução, transcrição e separação não integram o download inicial. A preparação obtém os modelos diretamente de seus fornecedores; seus termos continuam aplicáveis. Consulte o guia de primeiros passos.
 
 O repositório do SubForgeAI ainda não define uma licença geral para o código próprio. Isso não altera as licenças dos componentes de terceiros.
+
+
+Whisper Vulkan: [whisper.cpp](https://github.com/ggml-org/whisper.cpp), licença MIT em `licenses/whisper.cpp-LICENSE.txt`. O runtime Windows é a distribuição [nyancodex/whisper-server-vulkan-windows v0.1.0](https://github.com/nyancodex/whisper-server-vulkan-windows/releases/tag/v0.1.0), um build de terceiros; SHA256 fixado no código: `587d04a2805737436d134ab9e02c80437f41a7cb64018a7cd4d8f65a76a56af1`. O instalador de dependências verifica o arquivo antes de extrair apenas os componentes permitidos. Os modelos são baixados separadamente de `ggerganov/whisper.cpp` no Hugging Face, com revisão e SHA256 do fornecedor.

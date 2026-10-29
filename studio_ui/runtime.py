@@ -63,6 +63,10 @@ class Runtime:
                 home.mkdir(parents=True, exist_ok=True)
                 from maintenance_tools import resource_env
                 env = os.environ.copy();env.update(resource_env(self._resources))
+                from studio_ui.gpu_policy import cuda_available, ollama_environment
+                vulkan = not cuda_available()
+                env.update(ollama_environment(vulkan))
+                log('[GPU] Ollama: '+('Vulkan' if vulkan else 'CUDA')+'; inferência exige modelo integral na GPU.')
                 env.update(OLLAMA_HOST=host, OLLAMA_MODELS=str(self.processes.OLLAMA_MODELS_DIR),
                            USERPROFILE=str(home), HOME=str(home),
                            OLLAMA_MAX_LOADED_MODELS='1', OLLAMA_NUM_PARALLEL='1')

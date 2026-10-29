@@ -20,13 +20,15 @@ class MaintenanceTests(unittest.TestCase):
     def test_ollama_requests_include_limits_without_changing_context_or_precision(self):
         import ollama_script as O
         payloads=[]
-        with patch.dict(os.environ,{'SUBFORGEAI_CPU_THREADS':'1','SUBFORGEAI_GPU_LAYERS':'0'}),patch.object(O,'_ollama_stream',side_effect=lambda url,body:payloads.append(body) or 'Olá.'):
+        with patch('studio_ui.gpu_policy.ensure_ollama_gpu'),patch.dict(os.environ,{'SUBFORGEAI_CPU_THREADS':'1','SUBFORGEAI_GPU_LAYERS':'0'}),patch.object(O,'_ollama_stream',side_effect=lambda url,body:payloads.append(body) or 'Olá.'):
             self.assertEqual(O._ollama_call('translategemma:12b',[{'role':'user','content':'hello'}]),'Olá.')
-        options=payloads[0]['options'];self.assertEqual(options['num_thread'],1);self.assertEqual(options['num_gpu'],0);self.assertEqual(options['num_ctx'],4096);self.assertEqual(payloads[0]['model'],'translategemma:12b')
-    def test_ocr_honors_cpu_limit(self):
+        options=payloads[0]['options'];self.assertEqual(options['num_thread'],1);self.assertEqual(options['num_gpu'],999);self.assertEqual(options['num_ctx'],4096);self.assertEqual(payloads[0]['model'],'translategemma:12b')
+    def test_ocr_cpu_inference_is_blocked_before_engine_creation(self):
         from pgs_ocr import Reader
-        with patch.dict(os.environ,{'SUBFORGEAI_CPU_THREADS':'1'}),patch('rapidocr.RapidOCR') as engine:
-            Reader();self.assertEqual(engine.call_args.kwargs['params']['EngineConfig.onnxruntime.intra_op_num_threads'],1)
+        from studio_ui.gpu_policy import GPURequiredError
+        with patch('rapidocr.RapidOCR') as engine:
+            with self.assertRaises(GPURequiredError): Reader()
+            engine.assert_not_called()
     def test_inventory_and_checksum_detect_same_size_corruption(self):
         blob,_=self.blob_model();row=scan_models(self.app)[0];self.assertTrue(row['offline']);result=verify_model(row);self.assertGreater(result['verified'],0);blob.write_bytes(b'X'+blob.read_bytes()[1:])
         with self.assertRaises(ValueError):verify_model(row)
