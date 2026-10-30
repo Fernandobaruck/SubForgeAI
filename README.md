@@ -16,7 +16,6 @@ Aplicativo para Windows voltado à criação e revisão de legendas de anime, co
 
 O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** instalado, sem modelos e sem dados pessoais. É necessário espaço temporário adicional durante a instalação. O instalador gráfico usa motor nativo com até quatro partes simultâneas, pausa, retomada e opção de uma conexão. As partes `.bin` da release são baixadas automaticamente pelo instalador. Não é necessário baixá-las manualmente. O botão **Code → Download ZIP** baixa apenas o código para desenvolvimento.
 
-[Instalador alternativo em ZIP](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.5/SubForgeAI-Instalar-rapido-1.0.5.zip): extraia todos os arquivos e abra Instalar.cmd.
 
 ![Interface do instalador gráfico, com progresso ilustrativo](assets/screenshots/installer.png)
 
@@ -79,4 +78,4 @@ Configurações, glossários pessoais, histórico, saídas, caches, modelos e ch
 
 Nenhuma licença de uso ou redistribuição do código foi definida pelo titular até o momento. Dependências e modelos mantêm suas próprias licenças; consulte os respectivos fornecedores antes de redistribuí-los.
 
-Se você já começou a baixar a mesma versão pelo instalador antigo, feche o CMD antigo, extraia todo o ZIP do instalador rápido e abra **Instalar.cmd**. Ele aproveita automaticamente o cache do mesmo usuário do Windows. Não apague o cache nem execute dois instaladores ao mesmo tempo. Para redes que não funcionem bem com paralelismo, use **Instalar-1-conexao.cmd**.
+Se já começou o download da mesma versão, feche o instalador anterior e abra o instalador gráfico. O cache do mesmo usuário do Windows é reaproveitado automaticamente. Para redes com dificuldade no paralelismo, escolha **1 · Compatibilidade** antes de iniciar.

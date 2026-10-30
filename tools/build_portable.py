@@ -112,7 +112,7 @@ def main():
     envelope = dict(payload_b64=base64.b64encode(encoded).decode(), signature=base64.b64encode(sign(private, encoded)).decode())
     manifest = out / f'SubForgeAI-portable-{VERSION}.manifest.json'
     manifest.write_text(json.dumps(envelope, indent=2), encoding='utf-8')
-    from tools.build_installer import build as build_installer
+    from tools.build_visual_installer import build as build_installer
     setup = build_installer(ROOT, out, VERSION)
     print(json.dumps(dict(setup=str(setup), parts=parts, manifest=str(manifest), zip_size=payload['zip_size'])), flush=True)
 

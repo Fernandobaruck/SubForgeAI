@@ -6,7 +6,7 @@
 2. Abra o executável. O instalador gráfico não precisa de extração de ZIP, CMD, Python ou execução como administrador.
 3. Escolha uma pasta nova e clique em **Instalar**. Aguarde o download, a verificação e a extração. Use **Pausar download** e **Continuar download** se precisar. No final, clique em **Abrir Studio**.
 
-O seletor de idioma oferece português, inglês e espanhol. Se a rede tiver dificuldade com downloads paralelos, escolha **1 · Compatibilidade** antes de iniciar. O instalador alternativo em ZIP continua disponível: extraia tudo e abra Instalar.cmd.
+O seletor de idioma oferece português, inglês e espanhol. Se a rede tiver dificuldade com downloads paralelos, escolha **1 · Compatibilidade** antes de iniciar.
 
 O instalador baixa automaticamente as partes grandes da mesma release: você não precisa juntar arquivos nem instalar Python, Qt, Ollama ou FFmpeg à parte. A pasta de destino precisa ser nova; uma instalação existente não é substituída. Se a internet cair, abra o instalador novamente para aproveitar as partes já baixadas. Após instalar, os arquivos temporários grandes são removidos.
 
@@ -55,6 +55,6 @@ Para vídeos, o Studio pode aproveitar legendas disponíveis ou transcrever o á
 | Modelo não encontrado | Abra **Preparar para começar**, confira o estado e baixe o modelo necessário. |
 | Erro de CUDA ou falta de memória | Atualize o driver pelo fabricante, feche programas que ocupam VRAM ou escolha um TranslateGemma menor. Para AMD/Intel, prepare Whisper Vulkan e selecione Automático/Vulkan nas Configurações. |
 | Ollama demorou ou tradução parou | Confira Diagnóstico e o log; tente retomar o mesmo trabalho para aproveitar o checkpoint. |
-| Instalação incompleta | Abra o instalador novamente para retomar. Use uma pasta nova. Se estiver usando o instalador alternativo em ZIP, extraia todos os arquivos antes de abrir Instalar.cmd. |
+| Instalação incompleta | Abra o instalador novamente para retomar. Use uma pasta nova. |
 
 Para pedir ajuda, abra uma [issue](https://github.com/Fernandobaruck/SubForgeAI/issues) com versão, Windows, GPU/RAM, operação e mensagem do log. Remova caminhos pessoais e não envie vídeos ou legendas protegidas sem autorização.

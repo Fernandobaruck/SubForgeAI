@@ -71,11 +71,11 @@ Com o runtime preparado e a chave de publicação disponível no perfil do mante
 
 ```powershell
 runtime/python/python.exe -B -X utf8 tools/prepare_release.py --version 1.0.1
-runtime/python/python.exe -B -X utf8 tools/build_portable.py --version 1.0.1
-runtime/python/python.exe -B -X utf8 tools/publish_release.py --version 1.0.1 --portable
+runtime/python/python.exe -B -X utf8 tools/build_portable.py --version 1.0.5
+runtime/python/python.exe -B -X utf8 tools/publish_release.py --version 1.0.5 --portable
 ```
 
-Execute as verificações antes de publicar. O instalador pequeno `SubForgeAI-Instalar-1.0.1.zip` contém `Instalar.cmd` e `Instalar.ps1`. Ele verifica um manifesto RSA/SHA-256 próprio e baixa as partes assinadas de até 1 GiB, respeitando o limite por arquivo do GitHub. Os nomes, tamanhos e hashes das partes estão no manifesto. A junção, a verificação do ZIP e a extração são automáticas; o destino precisa ser uma pasta nova. Downloads parciais são mantidos para retomada e partes são removidas depois da instalação bem-sucedida.
+Execute as verificações antes de publicar. O instalador gráfico `SubForgeAI-Instalar-visual-1.0.5.exe` é a única opção de instalação publicada. Ele inclui a interface e o motor de download em um único executável, sem precisar extrair ZIP ou abrir CMD. Ele verifica um manifesto RSA/SHA-256 próprio e baixa as partes assinadas de até 1 GiB, respeitando o limite por arquivo do GitHub. Os nomes, tamanhos e hashes das partes estão no manifesto. A junção, a verificação do ZIP e a extração são automáticas; o destino precisa ser uma pasta nova. Downloads parciais são mantidos para retomada e partes são removidas depois da instalação bem-sucedida.
 
 A assinatura do manifesto protege o pacote. O executável e os scripts não possuem assinatura Authenticode e o Windows pode exibir editor desconhecido. Não instrua usuários a desativar o antivírus.
 

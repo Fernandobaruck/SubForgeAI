@@ -8,7 +8,6 @@ import base64
 import subprocess
 import sys
 import time
-import zipfile
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -48,15 +47,10 @@ def main():
         portable = json.loads(encoded)
         if portable['repository'] != REPOSITORY or portable['version'] != args.version:
             raise ValueError('Portable identity mismatch')
-        paths.extend([folder / f'SubForgeAI-Instalar-{args.version}.zip', portable_manifest])
-        fast=folder / f'SubForgeAI-Instalar-rapido-{args.version}.zip'
-        if fast.is_file():
-            with zipfile.ZipFile(fast) as archive:
-                if set(archive.namelist())!={'Instalar.cmd','Instalar.ps1','DownloadEngine.cs','Instalar-1-conexao.cmd','LEIA-ME.txt'}:
-                    raise ValueError('Fast installer contents are invalid')
-                if '__VERSION__' in archive.read('Instalar.ps1').decode('utf-8-sig'):
-                    raise ValueError('Fast installer version was not substituted')
-            paths.append(fast)
+        graphical=folder / f'SubForgeAI-Instalar-visual-{args.version}.exe'
+        if not graphical.is_file() or graphical.read_bytes()[:2]!=b'MZ':
+            raise ValueError('Graphical installer is missing or invalid')
+        paths.extend([graphical,portable_manifest])
         for part in portable['parts']:
             path = folder / part['name']
             if path.parent != folder or path.stat().st_size != part['size'] or file_sha(path) != part['sha256']:
