@@ -30,6 +30,21 @@ def installed(root, model):
     except (OSError, ValueError, KeyError): return False
 
 
+def ensure_ready(root, model, progress, cancel):
+    """Repair a missing Vulkan installation before a transcription starts."""
+    root = Path(root)
+    if not installed(root, model):
+        progress('Preparando Whisper Vulkan: componentes ou modelo ausentes', 0)
+        prepare(root, model, progress, cancel)
+    if cancel.is_set():
+        raise RuntimeError('Preparação interrompida.')
+    if not installed(root, model):
+        raise GPURequiredError('Preparação do Whisper Vulkan incompleta. Abra Preparar para começar e prepare o modelo Vulkan selecionado.')
+    # A successful download alone does not prove hardware acceleration works.
+    probe(root)
+    return root/'tools/whispercpp/whisper-cli.exe', model_path(root, model)
+
+
 def extract_runtime(archive, root):
     if hashlib.sha256(Path(archive).read_bytes()).hexdigest() != RUNTIME_SHA256:
         raise ValueError('Checksum inválido do Whisper Vulkan.')

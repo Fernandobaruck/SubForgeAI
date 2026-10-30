@@ -1874,17 +1874,26 @@ def main():
     # whispercpp discovery (lazy)
     whisper_cli = None
     cpp_model = None
-    if backend in ("auto", "whispercpp"):
+    if backend == "whispercpp":
+        import threading
+        from studio_ui.vulkan_support import ensure_ready
+        last_progress = [None]
+        def preparation_progress(message, value):
+            step = int(value * 10)
+            key = (message, step)
+            if key != last_progress[0]:
+                print(f'[INFO] {message} ({value:.0%})', flush=True)
+                last_progress[0] = key
+        try:
+            whisper_cli, cpp_model = ensure_ready(root, args.model, preparation_progress, threading.Event())
+        except Exception as exc:
+            print(f'[ERRO] Não foi possível preparar Whisper Vulkan: {exc}. '
+                  'Confira a conexão e prepare o modelo Vulkan em Preparar para começar. CPU bloqueada.', flush=True)
+            return 6
+    elif backend == "auto":
         whisper_cli = _find_whispercpp_cli(root)
         if whisper_cli is not None:
             cpp_model = _whispercpp_model_path(root, args.model)
-        if backend == "whispercpp":
-            if whisper_cli is None:
-                print("[ERRO] whispercpp selecionado, mas whisper-cli não foi encontrado (tools/whispercpp).")
-                return 6
-            if cpp_model is None:
-                print("[ERRO] whispercpp selecionado, mas modelo .bin não foi encontrado em models/whispercpp.")
-                return 6
 
     # Decide backend efetivo
     use_cpp = False
