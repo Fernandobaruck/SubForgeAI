@@ -1,14 +1,16 @@
 """Fansub metadata, safe ASS export, episode ordering and empirical queue estimates."""
 from __future__ import annotations
+from studio_ui.output_layout import sidecar_path
 import re,math,statistics
 from pathlib import Path
 from html.parser import HTMLParser
 from season_tools import timestamp
 
 KINDS=('dialogue','music','sign')
-PRESET_DEFAULTS=dict(font='Arial',size=48,color='#FFFFFF',outline_color='#000000',outline=2,shadow=1,margin=45,alignment=2,width=1920,height=1080,preserve_ass=True,bold=False)
-# Calibrated against the user's captures; this is not an official service preset.
-REFERENCE_PRESET={**PRESET_DEFAULTS,'font':'Trebuchet MS','size':66,'outline':5,'shadow':0,'bold':True}
+PRESET_DEFAULTS=dict(font='Arial',size=48,color='#FFFFFF',outline_color='#000000',outline=2,shadow=1,margin=45,alignment=2,width=1920,height=1080,preserve_ass=True,bold=False,layout='standard')
+# Matches the user's supplied ASS; no official service affiliation.
+REFERENCE_PRESET={**PRESET_DEFAULTS,'font':'Trebuchet MS','size':26,'outline':2.25,'shadow':0.7,'margin':20,'width':640,'height':480,'bold':False,'layout':'streaming'}
+REFERENCE_VERSION='reference-v2'
 
 def annotations(value,count):
     if not isinstance(value,dict):raise ValueError('Classificação de blocos inválida.')
@@ -46,8 +48,9 @@ def validate_preset(value):
         if not isinstance(preset[key],str) or not re.fullmatch(r'#[0-9a-fA-F]{6}',preset[key]):raise ValueError('Use uma cor no formato #RRGGBB.')
     for key,low,high in [('size',14,100),('outline',0,8),('shadow',0,8),('margin',0,300),('width',320,7680),('height',240,4320)]:
         number=preset[key]
-        if type(number) not in (float,int) or not math.isfinite(number) or int(number)!=number or not low<=number<=high:raise ValueError('Dimensões do padrão inválidas.')
-        preset[key]=int(number)
+        if type(number) not in (float,int) or not math.isfinite(number) or (key not in ('outline','shadow') and int(number)!=number) or not low<=number<=high:raise ValueError('Dimensões do padrão inválidas.')
+        preset[key]=float(number) if key in ('outline','shadow') and int(number)!=number else int(number)
+    if preset['layout'] not in ('standard','streaming'):raise ValueError('Diagramação do padrão inválida.')
     if preset['alignment'] not in (2,8) or type(preset['preserve_ass']) is not bool or type(preset['bold']) is not bool:raise ValueError('Padrão de exportação inválido.')
     preset['alignment']=int(preset['alignment'])
     return preset
@@ -91,7 +94,16 @@ Collisions: Normal
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 '''
     for name,alignment,italic in [('Dialogue',preset['alignment'],0),('Simultaneous',preset['alignment'],0),('Music',8,-1),('Sign',8,0)]:
-        header+=f"Style: {name},{preset['font']},{preset['size']},{ass_color(preset['color'])},&H000000FF,{ass_color(preset['outline_color'])},&H80000000,{-1 if preset['bold'] else 0},{italic},0,0,100,100,0,0,1,{preset['outline']},{preset['shadow']},{alignment},{preset['margin']},{preset['margin']},{preset['margin']},1\n"
+        size,outline,margin_h,margin_v=preset['size'],preset['outline'],preset['margin'],preset['margin']
+        if preset['layout']=='streaming':
+            special=name in ('Music','Sign');scale=preset['height']/480
+            size=round(preset['size']*24/26,3) if special else size
+            outline=round(preset['outline']*2/2.25,3) if special else outline
+            margin_h=round((26 if name=='Music' else 24)*preset['width']/640)
+            margin_v=round(23*scale) if name=='Music' else margin_v
+            alignment=preset['alignment']
+        fmt=lambda n:format(n,'g')
+        header+=f"Style: {name},{preset['font']},{fmt(size)},{ass_color(preset['color'])},&H000000FF,{ass_color(preset['outline_color'])},&H80000000,{-1 if preset['bold'] else 0},{italic},0,0,100,100,0,0,1,{fmt(outline)},{fmt(preset['shadow'])},{alignment},{margin_h},{margin_h},{margin_v},1\n"
     header+='\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n'
     for i,(text,(a,b)) in enumerate(zip(doc.values,doc.bounds)):
         if a is None or b is None or a<0 or b<=a or round(b*100)<=round(a*100):raise ValueError('A exportação ASS exige tempos válidos de pelo menos um centésimo.')
@@ -114,26 +126,33 @@ def reference_copy(source, cancel=None):
     if cancel is not None and cancel.is_set():raise RuntimeError('Cancelado')
     if source.suffix.lower() not in ('.srt','.vtt','.ass'):raise ValueError('Selecione uma legenda SRT, ASS ou VTT.')
     context=read_context(source)
-    if context.get('visual_style')=='reference-v1':return str(source.resolve())
+    if context.get('visual_style')==REFERENCE_VERSION:return str(source.resolve())
+    if context.get('visual_style')=='reference-v1':
+        original=Path(context.get('visual_source_path',''))
+        import hashlib
+        if original.is_file() and original.resolve()!=source.resolve() and hashlib.sha256(original.read_bytes()).hexdigest()==context.get('visual_source_sha'):
+            return reference_copy(original,cancel)
+        raise ValueError('Reexporte a legenda original para atualizar o visual antigo com segurança.')
     import hashlib
     source_sha=hashlib.sha256(source.read_bytes()).hexdigest()
     preferred=source.with_name(source.stem+'.visual.ass')
-    cached=read_context(preferred) if preferred.is_file() else {}
-    if cached.get('visual_style')=='reference-v1' and cached.get('visual_source_sha')==source_sha and cached.get('visual_source_path')==str(source.resolve()):
-        return str(preferred.resolve())
+    for candidate in [preferred,*sorted(source.parent.glob(source.stem+'.visual_*.ass'))]:
+        cached=read_context(candidate) if candidate.is_file() else {}
+        if cached.get('visual_style')==REFERENCE_VERSION and cached.get('visual_source_sha')==source_sha and cached.get('visual_source_path')==str(source.resolve()):
+            return str(candidate.resolve())
     if source.suffix.lower()=='.ass':
         raw=decode(source.read_bytes());template,records=parse_ass_document(raw)
         doc=SimpleNamespace(ext='.ass',render=lambda:raw)
         fields=ass_fields(doc);match=re.search(r'(?im)^PlayResY\s*:\s*(\d+)\s*$',raw)
         height=int(match[1]) if match else 288
         if not 1<=height<=7680:raise ValueError('Resolução ASS inválida.')
-        size=66*height/1080;outline=5*height/1080
-        prefix=r'{\fnTrebuchet MS\fs'+f'{size:.3f}'+r'\b1\bord'+f'{outline:.3f}'+r'\shad0\1c&HFFFFFF&\3c&H000000&}'
+        size=26*height/480;outline=2.25*height/480;shadow=.7*height/480
+        prefix=r'{\fnTrebuchet MS\fs'+f'{size:.3f}'+r'\b0\bord'+f'{outline:.3f}'+r'\shad'+f'{shadow:.3f}'+r'\1c&HFFFFFF&\3c&H000000&}'
         values=[];changed=0
         for index,(_,value) in enumerate(records):
             if cancel is not None and cancel.is_set():raise RuntimeError('Cancelado')
             style=fields[index].get('style','')
-            special=re.search(r'(?i)(sign|placa|title|karaoke|song|music|lyrics|opening|ending)',style) or re.search(r'\\(?:pos\b|move\b|org\b|clip\b|iclip\b|p[1-9]|k[fo]?\d|an[789]|t\(|fr[xyz]?\b|fax\b|fay\b|fsc[xy]\b)',value) or any(c in value for c in '♪♫♬♩')
+            special=re.search(r'(?i)(sign|placa|title|t[ií]tulo|karaoke|song|m[uú]sic|lyrics|opening|ending)',style) or re.search(r'\\(?:pos\b|move\b|org\b|clip\b|iclip\b|p[1-9]|k[fo]?\d|an[789]|t\(|fr[xyz]?\b|fax\b|fay\b|fsc[xy]\b)',value) or any(c in value for c in '♪♫♬♩')
             if special:values.append(value)
             elif value.startswith(prefix):values.append(value)
             else:values.append(prefix+value);changed+=1
@@ -142,7 +161,10 @@ def reference_copy(source, cancel=None):
             raise ValueError('Esta legenda ASS contém apenas elementos especiais; sua diagramação foi preservada.')
         content=template.render(values)
     else:
-        doc=load_document_without_reports(source);doc.ext=source.suffix.lower();doc.annotations={}
+        doc=load_document_without_reports(source);doc.ext=source.suffix.lower();doc.times=['']*len(doc.values)
+        # Only explicit markers/styles identify songs; never guess from episode time.
+        doc.annotations={r['index']:{'kind':r['suggestedKind'],'simultaneous':False} for r in suggest(doc) if r['reason']}
+        doc.annotations.update(annotations(context.get('subtitle_annotations',{}),len(doc.values)))
         if not doc.values:raise ValueError('A legenda não contém falas válidas.')
         content=render_ass(doc,REFERENCE_PRESET)
     with reserve_output(preferred) as target:
@@ -152,7 +174,8 @@ def reference_copy(source, cancel=None):
         write_context(target,context.get('source_file') or source,context.get('confirmed_terms',{}),context.get('speech_terms'),context.get('uncertain_ranges'),context.get('source_kind','subtitle'),context.get('series_project'))
         import json
         from pipeline_io import atomic_write_text
-        sidecar=Path(str(target)+'.source.json');data=json.loads(sidecar.read_text(encoding='utf-8'));data.update(visual_style='reference-v1',visual_source_sha=source_sha,visual_source_path=str(source.resolve()))
+        sidecar=sidecar_path(target,'.source.json');data=json.loads(sidecar.read_text(encoding='utf-8'));data.update(visual_style='reference-v1',visual_source_sha=source_sha,visual_source_path=str(source.resolve()))
+        data['visual_style']=REFERENCE_VERSION
         atomic_write_text(sidecar,json.dumps(data,ensure_ascii=False,indent=2))
     return str(target.resolve())
 

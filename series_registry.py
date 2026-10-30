@@ -1,5 +1,6 @@
 """User-confirmed anime projects shared across media folders and seasons."""
 from __future__ import annotations
+from studio_ui.output_layout import sidecar_path
 import hashlib,json,re,uuid
 from pathlib import Path
 from pipeline_io import atomic_write_text
@@ -105,5 +106,5 @@ def apply_project(source,origin,root,identifier):
     registry=SeriesRegistry(root);registry._id(identifier)
     terms={**context.get('confirmed_terms',{}),**registry.confirmed(identifier)}
     write_context(source,context.get('source_file') or origin,terms,context.get('speech_terms'),context.get('uncertain_ranges'),context.get('source_kind','subtitle'))
-    path=Path(str(source)+'.source.json');data=read_json(path);data['series_project']=identifier
+    path=sidecar_path(source,'.source.json');data=read_json(path);data['series_project']=identifier
     atomic_write_text(path,json.dumps(data,ensure_ascii=False,indent=2))

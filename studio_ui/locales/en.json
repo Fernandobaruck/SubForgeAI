@@ -800,5 +800,6 @@
   "Opção intermediária para pouca VRAM; pode perder nomes e falas rápidas.": "Intermediate option for limited VRAM; may miss names and fast speech.",
   "Mais capacidade que Small; exige mais memória e pode ser mais lento que Turbo.": "More capable than Small; requires more memory and may be slower than Turbo.",
   "Prioriza velocidade com boa capacidade de reconhecimento; padrão do projeto.": "Prioritizes speed with good recognition capability; project default.",
-  "Modelo mais completo desta seleção; prioriza reconhecimento e exige mais recursos.": "Most capable model in this selection; prioritizes recognition and requires more resources."
+  "Modelo mais completo desta seleção; prioriza reconhecimento e exige mais recursos.": "Most capable model in this selection; prioritizes recognition and requires more resources.",
+  "Áudios": "Audio"
 }

@@ -1,3 +1,4 @@
+from studio_ui.output_layout import sidecar_path
 """Fansub integrity, export, organization, history and empirical estimates."""
 import json,time,tempfile,unittest
 from pathlib import Path
@@ -68,7 +69,7 @@ class FansubControllerTests(unittest.TestCase):
     def test_profiles_are_isolated_and_backed_up(self):
         backend=self.controller();review=backend.review;fansub=review.fansub;fansub.setPreset({'size':52});fansub.saveProfile('Global');project=review.registry.create('A');review.refreshProjects();review.setProject(project);self.assertEqual(fansub.profiles,[]);fansub.setPreset({'size':60});fansub.saveProfile('Anime');backup=review.workspace.backup();fansub.removeProfile('Anime');self.assertEqual(fansub.profiles,[]);review.workspace.restore_backup(backup);self.assertEqual(fansub.profiles[0]['settings']['size'],60);review.setProject('');fansub.loadProfile('Global');self.assertEqual(fansub.preset['size'],52)
     def test_export_creates_unique_copies_with_audit_and_preserves_original(self):
-        backend=self.controller();review=backend.review;fansub=review.fansub;review.openDocument(str(self.path));self.wait(review);fansub.classify('music',False);fansub.exportAss();self.wait(review);fansub.exportAss();self.wait(review);outputs=list((self.app/'outputs/studio/exports').glob('*.ass'));self.assertEqual(len(outputs),2);self.assertTrue(all(Path(str(p)+'.export.json').is_file() for p in outputs));self.assertEqual(self.path.read_text(encoding='utf-8'),SRT)
+        backend=self.controller();review=backend.review;fansub=review.fansub;review.openDocument(str(self.path));self.wait(review);fansub.classify('music',False);fansub.exportAss();self.wait(review);fansub.exportAss();self.wait(review);outputs=list((self.app/'outputs/studio/exports').glob('*.ass'));self.assertEqual(len(outputs),2);self.assertTrue(all(sidecar_path(p,'.export.json').is_file() for p in outputs));self.assertEqual(self.path.read_text(encoding='utf-8'),SRT)
     def test_classification_selected_and_navigation(self):
         backend=self.controller();review=backend.review;review.openDocument(str(self.path));self.wait(review);review.toggle(1,True);review.fansub.classify('sign',True);self.assertEqual(review.document.annotations,{1:{'kind':'sign','simultaneous':True}});review.navigate(1);self.assertEqual(review.currentIndex,1);review.navigate(100);self.assertEqual(review.currentIndex,1);review.navigate(-1);review.approveNext();self.assertEqual(review.currentIndex,1);self.assertIn(0,review.document.approved)
     def test_line_wrapping_does_not_rewrite_confirmed_songs_or_signs(self):

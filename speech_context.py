@@ -1,4 +1,5 @@
 """Content-bound provenance and confirmed series context for generated subtitles."""
+from studio_ui.output_layout import sidecar_path
 from pathlib import Path
 import hashlib
 import json
@@ -9,7 +10,7 @@ VERSION = 'speech-context-v1'
 
 def read_context(source):
     source = Path(source)
-    sidecar = Path(str(source)+'.source.json')
+    sidecar = sidecar_path(source,'.source.json')
     if not sidecar.is_file(): return {}
     try:
         data = json.loads(sidecar.read_text(encoding='utf-8'))
@@ -27,6 +28,9 @@ def write_context(subtitle, origin, terms, speech_terms=None, uncertain_ranges=N
                 source_file=str(origin.resolve()),series_identity=hashlib.sha256(str(origin.parent.resolve()).casefold().encode()).hexdigest()[:20],
                 confirmed_terms=dict(terms),speech_terms=dict(speech_terms or {}),uncertain_ranges=list(uncertain_ranges or []))
     if series_project:data['series_project']=series_project
+    # A newly generated file may reuse a visible name whose older intermediate
+    # is archived internally. Stage its provenance beside this new file; the
+    # pipeline compacts it only after finalizing the deliverable.
     atomic_write_text(Path(str(subtitle)+'.source.json'),json.dumps(data,ensure_ascii=False,indent=2))
 
 

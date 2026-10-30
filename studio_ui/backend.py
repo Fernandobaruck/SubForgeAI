@@ -1,5 +1,6 @@
 """Qt adapter. All worker events are consumed on the Qt main thread."""
 from __future__ import annotations
+from studio_ui.output_layout import sidecar_path,is_internal
 
 import json
 import queue
@@ -33,6 +34,8 @@ class Backend(QObject):
         self.pipeline = Pipeline(runtime, root)
         self._translations = Translations()
         self._settings = self._load_settings()
+        from .file_browser import FileLocations
+        self.fileLocations=FileLocations(self.root)
         self._qt_translator = QTranslator(self)
         self._apply_ui_preferences()
         self._items = []
@@ -253,8 +256,18 @@ class Backend(QObject):
 
     @Slot()
     def chooseFiles(self):
-        paths, _ = QFileDialog.getOpenFileNames(None, self.translate('Adicionar episódios ou legendas'), str(self.root),
-            self.translate('Vídeos, áudios e legendas') + ' (*.mkv *.mp4 *.avi *.mov *.webm *.m4v *.mpg *.mpeg *.ts *.m2ts *.mp3 *.wav *.flac *.m4a *.aac *.ogg *.srt *.ass *.vtt *.ssa *.sub *.sup *.idx *.mks);;' + self.translate('Todos os arquivos') + ' (*)', options=QFileDialog.Option.DontUseNativeDialog)
+        fallback=next((str(Path(item['path']).parent) for item in reversed(self._items)
+                       if Path(item['path']).is_file()),None)
+        filters = ';;'.join([
+            self.translate('Vídeos, áudios e legendas')+' ('+' '.join('*'+ext for ext in sorted(MEDIA|SUBTITLES))+')',
+            self.translate('Vídeos')+' (*.mkv *.mp4 *.avi *.mov *.webm *.m4v *.mpg *.mpeg *.ts *.m2ts)',
+            self.translate('Áudios')+' (*.mp3 *.wav *.flac *.m4a *.aac *.ogg)',
+            self.translate('Legendas')+' ('+' '.join('*'+ext for ext in sorted(SUBTITLES))+')',
+            self.translate('Todos os arquivos')+' (*)'])
+        paths, _ = QFileDialog.getOpenFileNames(None,self.translate('Adicionar episódios ou legendas'),
+            self.fileLocations.start('input',fallback),filters,
+            options=QFileDialog.Option.HideNameFilterDetails)
+        if paths:self.fileLocations.remember('input',paths[0])
         self.addFiles(paths)
 
     @Slot('QVariantList')
@@ -477,7 +490,7 @@ class Backend(QObject):
                 for folder in destinations:
                     if not folder.is_dir(): continue
                     for path in folder.rglob('*'):
-                        if not path.is_file() or (path.suffix.lower() not in {'.srt', '.ass', '.vtt', '.mkv', '.mp4'} and not path.name.endswith('.review_required.json')): continue
+                        if is_internal(path) or not path.is_file() or (path.suffix.lower() not in {'.srt', '.ass', '.vtt', '.mkv', '.mp4'} and not path.name.endswith('.review_required.json')): continue
                         internal=self.root/'outputs/studio'
                         if path.is_relative_to(internal) and path.relative_to(internal).parts[0] in ('history','context_inputs','previews','retranslate'):continue
                         if any(part.startswith('_') for part in path.relative_to(folder).parts): continue
@@ -514,7 +527,7 @@ class Backend(QObject):
     @Slot()
     def styleSubtitleFolder(self):
         if self.busy:return
-        folder=QFileDialog.getExistingDirectory(None,self.translate('Pasta das legendas prontas'),str(Path(self._preview_path).parent if self._preview_path else resolve_dir(self.root,self._settings['ollama_out_dir'])),options=QFileDialog.DontUseNativeDialog)
+        folder=QFileDialog.getExistingDirectory(None,self.translate('Pasta das legendas prontas'),str(Path(self._preview_path).parent if self._preview_path else resolve_dir(self.root,self._settings['ollama_out_dir'])))
         if not folder:return
         def work():
             from fansub_tools import reference_copy
@@ -522,11 +535,11 @@ class Backend(QObject):
             files=[]
             for path in Path(folder).rglob('*'):
                 if self.review._cancel.is_set():raise RuntimeError('Cancelado')
-                if path.is_file() and path.suffix.lower() in ('.srt','.vtt','.ass'):files.append(path)
+                if not is_internal(path) and path.is_file() and path.suffix.lower() in ('.srt','.vtt','.ass'):files.append(path)
             created=[];failed=0
             for path in files:
                 if self.review._cancel.is_set():raise RuntimeError('Cancelado')
-                if read_context(path).get('visual_style')=='reference-v1':continue
+                if read_context(path).get('visual_style')=='reference-v2':continue
                 try:created.append(reference_copy(path,self.review._cancel))
                 except (OSError,ValueError) as exc:failed+=1;self.pipeline.log('[WARN] '+path.name+': '+str(exc))
             return created,failed
@@ -558,12 +571,12 @@ class Backend(QObject):
             with candidate.open('r', encoding='utf-8-sig', errors='replace') as f:
                 self._preview = f.read(200_000)
             self._preview_title = candidate.name
-            report = Path(str(candidate) + '.quality.json')
+            report = sidecar_path(candidate,'.quality.json')
             if report.is_file():
                 quality = json.loads(report.read_text(encoding='utf-8'))
                 self._preview_title += f' · {quality.get("needs_review", 0)} bloco(s) sinalizado(s)'
             else:
-                audit_path = Path(str(candidate)+'.transcription.json')
+                audit_path = sidecar_path(candidate,'.transcription.json')
                 if audit_path.is_file():
                     audit = json.loads(audit_path.read_text(encoding='utf-8'))
                     self._preview_title += f' · áudio {audit.get("audio_stream", "?")} / {audit.get("language", "?")} · {len(audit.get("review_findings", []))} bloco(s) sinalizado(s)'
@@ -588,7 +601,7 @@ class Backend(QObject):
     @Slot(str)
     def chooseDirectory(self, key):
         if self._busy or key not in ('whisper_out_dir','ollama_out_dir','subs_out_dir','embed_output_dir'): return
-        selected = QFileDialog.getExistingDirectory(None, self.translate('Escolher pasta de saída'), str(resolve_dir(self.root, self._settings[key])), options=QFileDialog.Option.DontUseNativeDialog)
+        selected = QFileDialog.getExistingDirectory(None, self.translate('Escolher pasta de saída'), str(resolve_dir(self.root, self._settings[key])))
         if selected:
             path = Path(selected).resolve()
             try: value = str(path.relative_to(self.root))

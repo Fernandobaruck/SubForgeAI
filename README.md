@@ -4,11 +4,11 @@ Aplicativo para Windows voltado à criação e revisão de legendas de anime, co
 
 ## Baixar e começar
 
-**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.4/SubForgeAI-Instalar-rapido-1.0.4.zip)**
+**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.5/SubForgeAI-Instalar-rapido-1.0.5.zip)**
 
 [Ver todos os downloads e notas da versão](https://github.com/Fernandobaruck/SubForgeAI/releases/latest)
 
-1. Baixe **SubForgeAI-Instalar-rapido-1.0.4.zip**, extraia e abra **Instalar.cmd**.
+1. Baixe **SubForgeAI-Instalar-rapido-1.0.5.zip**, extraia e abra **Instalar.cmd**.
 2. Escolha uma pasta e aguarde. O instalador baixa, verifica e prepara o aplicativo sem pedir instalação de Python, Qt, Ollama ou FFmpeg à parte.
 3. No Studio, clique em **Preparar para começar** e baixe os modelos que deseja usar. Depois, adicione seus arquivos e inicie pela fila.
 
@@ -29,7 +29,7 @@ O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** in
 
 ## Visual padrão streaming
 
-Ative **Visual padrão streaming** em Início, Episódios ou Tradução e use a fila normalmente. Ao terminar, o Studio gera também a legenda `.visual.ass`, preservando o resultado original. É essa cópia que contém a fonte e o contorno para usar no reprodutor.
+Ative **Visual padrão streaming** em Início, Episódios ou Tradução e use a fila normalmente. Ao terminar, o Studio entrega uma legenda final `.visual.ass`, com Trebuchet MS regular, contorno preto, sombra discreta e estilos separados para músicas e títulos. O SRT intermediário e os relatórios JSON ficam guardados em uma pasta interna oculta, preservando a revisão. Com o visual desativado, o resultado final é SRT.
 
 Para legendas já prontas, abra **Resultados → Aplicar padrão streaming na pasta** e escolha a pasta da temporada, sem traduzir novamente. Também é possível selecionar um único resultado e usar **Aplicar padrão streaming**. O visual é uma aproximação de legendas de streaming, sem vínculo oficial com plataformas; Trebuchet MS precisa estar disponível no computador que reproduz o vídeo.
 

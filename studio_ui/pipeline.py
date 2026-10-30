@@ -144,6 +144,9 @@ class Pipeline:
                     results = self._episode(item, settings, effective_operation)
                     if settings.get('subtitle_style')=='reference' and effective_operation in ('transcribe','extract'):
                         results=self._style_results(results)
+                    from .output_layout import compact_result
+                    for output in results:
+                        if Path(output).is_file():compact_result(output)
                     if self.cancelled.is_set():
                         break
                     self.events.put(('item', item['id'], {'state': 'Concluído', 'progress': 1,
@@ -379,9 +382,12 @@ class Pipeline:
                 raise RuntimeError('O tradutor não confirmou a saída desta execução.')
             if settings.get('subtitle_style')=='reference':
                 styled=self._style_results([translated])
-                for path in styled:
-                    if path not in results:results.append(path)
                 translated=styled[-1]
+            from .output_layout import compact_result
+            compact_result(translated)
+            # Intermediate extraction/transcription/translation artifacts remain
+            # recoverable internally; only the deliverable belongs in Results.
+            results=[translated]
             if settings['embed_enabled'] and source.suffix.lower() in MEDIA and source.suffix.lower() not in {'.mp3','.wav','.flac','.m4a','.aac','.ogg'}:
                 def embed_runner(cmd, **_kwargs):
                     run(cmd, 'Incorporando legenda')
@@ -395,15 +401,20 @@ class Pipeline:
 
     def _style_results(self, paths):
         from fansub_tools import reference_copy
-        result=list(paths)
+        from .output_layout import compact_result
+        result=[]
         for path in paths:
-            if Path(path).suffix.lower() not in TRANSLATABLE:continue
+            if Path(path).suffix.lower() not in TRANSLATABLE:
+                result.append(path);continue
             if self.cancelled.is_set():raise RuntimeError('Cancelado')
             try:
                 output=reference_copy(path,self.cancelled)
+                output=compact_result(output,path if Path(output).resolve()!=Path(path).resolve() else None)
                 if output not in result:result.append(output)
                 self.log('[OK] Legenda com padrão streaming: '+output)
-            except ValueError as exc:self.log('[WARN] '+str(exc))
+            except ValueError as exc:
+                self.log('[WARN] '+str(exc))
+                if path not in result:result.append(path)
         return result
 
     def _transcribe_one(self, source, settings, py, run, confirmed):

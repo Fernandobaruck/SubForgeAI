@@ -93,7 +93,7 @@ As marcações removem a aprovação dos blocos afetados e ficam nos rascunhos, 
 
 Em **Exportação ASS**, configure família da fonte, tamanho, cor, contorno, sombra, margem, posição superior/inferior do diálogo e resolução de referência. **Exportar cópia ASS** grava um arquivo novo em `outputs/studio/exports/`; nomes repetidos recebem um sufixo, sem substituir exportações anteriores. Um `.export.json` registra origem, padrão e classificações.
 
-Para origens **SRT/VTT**, a conversão mantém cada evento e suas quebras, conserva formatação simples suportada (itálico, negrito, sublinhado, tachado e cor hexadecimal) e cria estilos próprios para diálogos, músicas, placas e eventos simultâneos. Músicas e placas ficam no alto. O renderizador organiza colisões entre diálogos simultâneos no mesmo plano, sem mudar os tempos. Tags incompatíveis, comandos ASS literais no texto e durações que zerariam ao arredondar para centésimos são recusados para conferência manual.
+Para origens **SRT/VTT**, a conversão mantém cada evento e suas quebras, conserva formatação simples suportada (itálico, negrito, sublinhado, tachado e cor hexadecimal) e cria estilos próprios para diálogos, músicas, placas e eventos simultâneos. No padrão genérico, músicas e placas ficam no alto; no Visual padrão streaming ficam embaixo, conforme a referência ASS fornecida. O renderizador organiza colisões entre diálogos simultâneos no mesmo plano, sem mudar os tempos. Tags incompatíveis, comandos ASS literais no texto e durações que zerariam ao arredondar para centésimos são recusados para conferência manual.
 
 Para origens **ASS**, a exportação conserva os estilos, posições, desenhos, nomes de falantes e fontes declaradas no arquivo existente; os campos do novo padrão não substituem essa diagramação. Este painel não é um editor visual de placas nem cria karaokê com temporização por sílaba. As fontes precisam estar instaladas no computador; elas não são incorporadas ao novo arquivo automaticamente.
 
@@ -237,7 +237,7 @@ O catálogo inicial contém uma coleção opcional de honoríficos; coleções e
 
 ## Visual padrão streaming na exportação ASS
 
-Em **Revisão → Fansub → Exportação ASS**, use **Visual padrão streaming** para carregar um estilo opcional calibrado com as referências: Trebuchet MS em negrito, tamanho ASS 66 em 1920×1080, branco, contorno preto 5, sombra 0, alinhamento inferior e margem 45. O renderizador escala o estilo proporcionalmente em outras resoluções. Não é um padrão oficial nem uma garantia de reprodução idêntica em todos os reprodutores.
+Em **Revisão → Fansub → Exportação ASS**, use **Visual padrão streaming** para carregar um estilo opcional calibrado com as referências: Trebuchet MS regular, tamanho ASS 26 em 640×480, branco, contorno preto 2,25, sombra 0,7, alinhamento inferior, margens laterais 24 e inferior 20. Músicas usam tamanho 24 em itálico, contorno 2 e margens 26/26/23; títulos usam tamanho 24 e contorno 2. Contorno e sombra aceitam frações. As músicas precisam estar classificadas ou conter marcadores reconhecíveis; o programa não presume que toda fala no início do episódio seja música. O renderizador escala o estilo proporcionalmente em outras resoluções. Não é um padrão oficial nem uma garantia de reprodução idêntica em todos os reprodutores.
 
 O botão apenas preenche os controles. Use **Renderizar prévia no vídeo** para conferir e **Exportar cópia ASS** para gerar a saída; **Salvar padrão** guarda os ajustes nos padrões existentes. **Restaurar estilo padrão** recupera Arial 48 sem negrito. As configurações padrão e os arquivos originais não são alterados automaticamente.
 
@@ -245,7 +245,7 @@ O estilo é aplicado ao converter SRT/VTT em ASS. ASS existente conserva sua dia
 
 ## Uso simples do visual padrão streaming
 
-Nas telas **Início**, **Episódios** e **Tradução**, ative **Visual padrão streaming** e use a fila normalmente. Ao concluir, o Studio cria também uma legenda `.visual.ass` ao lado do resultado original, com fonte branca em negrito e contorno preto. Se a incorporação ao vídeo estiver ativada, a versão estilizada é a usada para incorporar. O estilo também é aplicado às saídas de transcrição e extração.
+Nas telas **Início**, **Episódios** e **Tradução**, ative **Visual padrão streaming** e use a fila normalmente. Ao concluir, o Studio cria também uma legenda `.visual.ass` ao lado do resultado original, com fonte branca regular, contorno preto e sombra discreta. Se a incorporação ao vídeo estiver ativada, a versão estilizada é a usada para incorporar. O estilo também é aplicado às saídas de transcrição e extração.
 
 Para legendas já prontas, abra **Resultados** e use **Aplicar padrão streaming na pasta**, escolhendo a pasta das legendas da temporada. Para um único arquivo, selecione-o na lista e clique em **Aplicar padrão streaming**. Não há retradução. Textos e tempos são preservados; os arquivos existentes não são substituídos. Repetir a operação reutiliza uma cópia ainda válida.
 
@@ -292,3 +292,13 @@ Em **Preparar para começar**, há seis modelos multilíngues com **Usar este mo
 | Large v3 | 3,1 GB | 5–10 GB | 12 GB |
 
 As faixas são estimativas conservadoras para os motores do projeto, não medições em todas as placas nem mínimos garantidos. O [Whisper original](https://github.com/openai/whisper#available-models-and-languages) e o [Faster-Whisper](https://github.com/SYSTRAN/faster-whisper#benchmark) apresentam consumos diferentes; backend, driver, alinhamento, lote e separação de voz alteram a necessidade. A tela exibe exemplos de NVIDIA, AMD e Intel por capacidade; suporte real e velocidade precisam ser validados em cada placa. Essas recomendações não incluem Demucs nem a memória do TranslateGemma. Tiny/Base consomem menos memória, mas tendem a reconhecer pior falas difíceis de animes. Large v3 continua a opção mais completa; Turbo é uma opção de velocidade mesmo em PCs fortes.
+
+
+### Seleção de arquivos e pastas
+
+Os seletores usam a janela nativa do sistema. No Windows, ficam disponíveis busca, Acesso Rápido, discos e seleção múltipla. **Adicionar episódios ou legendas** lembra a última pasta escolhida; se ela não existir mais, usa uma origem válida da fila ou a pasta Vídeos do usuário. Os filtros separam vídeos, áudios, legendas e todos os arquivos, sem exibir a lista extensa de padrões no nome do filtro. A pasta é lembrada em `outputs/studio/file_browser.json`, um estado local excluído das distribuições. Cancelar a seleção mantém a fila. O visual e o idioma dos controles nativos seguem o Windows.
+
+
+### Um arquivo final por tradução
+
+A fila mostra e entrega a legenda final: `.visual.ass` com o Visual padrão streaming, ou `.srt` no modo original. Quando uma ASS é criada, o SRT gerado durante o processamento fica guardado em `.subforge`, junto dos relatórios JSON e da proveniência. Essa pasta é interna e oculta no Windows; não aparece na lista de Resultados. A revisão e os avisos continuam funcionando, e os leitores aceitam também os arquivos auxiliares antigos ao lado da legenda. As entradas fornecidas pelo usuário são preservadas. A incorporação opcional ainda entrega o vídeo correspondente. Exportações ASS manuais também guardam seu relatório internamente.

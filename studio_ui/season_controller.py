@@ -58,7 +58,7 @@ class SeasonController(QObject):
     @Slot()
     def chooseFolder(self):
         if not self.ready():return
-        path=QFileDialog.getExistingDirectory(None,self.review._text('Escolher pasta de legendas'),str(self.review.root/'outputs'),options=QFileDialog.DontUseNativeDialog)
+        path=QFileDialog.getExistingDirectory(None,self.review._text('Escolher pasta de legendas'),str(self.review.root/'outputs'))
         if path:self.loadFolder(path)
     @Slot(str)
     def loadFolder(self,path):

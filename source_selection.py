@@ -1,4 +1,5 @@
 """Explicit source selection and small non-destructive subtitle samples."""
+from studio_ui.output_layout import sidecar_path
 import json,re,subprocess,uuid
 from pathlib import Path
 from pipeline_io import atomic_write_text,staged_output
@@ -55,7 +56,7 @@ def subtitle_sample(path,folder,start,duration=60):
     context=read_context(path)
     write_context(target,context.get('source_file') or path,context.get('confirmed_terms',{}),context.get('speech_terms'),context.get('uncertain_ranges'),context.get('source_kind','subtitle'))
     if context.get('series_project'):
-        data=json.loads(Path(str(target)+'.source.json').read_text(encoding='utf-8'));data['series_project']=context['series_project'];atomic_write_text(Path(str(target)+'.source.json'),json.dumps(data,ensure_ascii=False))
+        data=json.loads(sidecar_path(target,'.source.json').read_text(encoding='utf-8'));data['series_project']=context['series_project'];atomic_write_text(sidecar_path(target,'.source.json'),json.dumps(data,ensure_ascii=False))
     return target
 
 

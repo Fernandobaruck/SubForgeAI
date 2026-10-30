@@ -11,7 +11,7 @@ import json
 import re
 import unicodedata
 
-VERSION = "context-cues-v5-caption-markers"
+VERSION = "context-cues-v6-question-fidelity"
 FORMAT = re.compile(r"\{[^}]*\}|<[^>]+>|\\[Nhnh]|\r?\n|[♪♫♬♩](?:[ \t]+)?")
 SENTINEL = re.compile(r"ZXQFMT(\d+)QXZ", re.I)
 STOP = set("""a an the i you he she it we they me him her us them my your our their
@@ -307,6 +307,14 @@ def terms_only(text: str, confirmed: dict[str,str]) -> str | None:
     return pattern.sub(lambda m:values[m.group().casefold()],text)
 
 
+def preview_heading(text: str, confirmed: dict[str,str]) -> str | None:
+    """Render a minimal Next + confirmed title/name card without inventing dialogue."""
+    for source,target in confirmed.items():
+        if re.fullmatch(r'next\s+(?:[:：-]\s*)?'+re.escape(source)+r'[.!]*',plain(text).strip(),re.I):
+            return 'A seguir, '+target+'.'
+    return None
+
+
 def semantic_breaks(text: str) -> bool:
     """Recognize speaker changes and caption annotations across display lines."""
     return bool(re.search(r"(?:\r?\n|\\N|\\n)\s*(?:[-–—]|[（(][^）)\r\n]{1,40}[）)])",text))
@@ -433,6 +441,8 @@ def reflow(text: str, ass: bool = False, width: int = 42) -> str:
 
 def quality_flags(source: str, target: str, duration: float | None, terms: dict[str, str], language: str = "en", *, width: int = 42, cps: float = 20) -> list[str]:
     flags = []
+    if language=='en' and '?' in plain(source) and '?' not in plain(target):
+        flags.append('question_lost')
     if not re.search(r"[（(]",source) and re.search(
             r"[（(]\s*(?:express(?:ão|ões)\s+de|onomatopeia|nota\s+do\s+tradutor|tradução\s*:)",target,re.I):
         flags.append("translator_explanation")
@@ -452,6 +462,12 @@ def quality_flags(source: str, target: str, duration: float | None, terms: dict[
             flags.append("old_man_relationship")
         if re.search(r"\bpor favor\b", target, re.I) and not re.search(r"\b(?:please|beg|kindly|favor)\b", source, re.I):
             flags.append("added_politeness")
+    if language == 'en' and preview_heading(source, terms) is not None:
+        ordinary=plain(target)
+        for src,dst in terms.items():
+            if contains(source,src):ordinary=re.sub(re.escape(dst),'',ordinary,flags=re.I)
+        if re.search(r'\b(?:segue|seguirá|indo|vai|irá|destino|local)\b',ordinary,re.I):
+            flags.append('preview_caption_invention')
     lines = re.split(r"\n|\\N", target)
     if any(len(plain(line)) > width for line in lines): flags.append("long_line")
     if len(lines) > 2: flags.append("too_many_lines")
@@ -483,6 +499,21 @@ def context_flags(source: str, target: str, names: dict[str, str]) -> list[str]:
         # its Japanese pronunciation. Only matched-script aliases are testable.
         names={k:v for k,v in names.items() if re.search(r'[\u3040-\u9fff]',k)}
     permitted=[dst for src,dst in names.items() if contains(source,src)]
+    # A glossary may contain ordinary forms of address as well as proper names.
+    # Equivalent addresses explicitly present in the source are not invented entities.
+    addresses = {
+        'Miss': ('senhorita','moça','mocinha'),
+        'Missy': ('senhorita','moça','mocinha'),
+        'Mister': ('senhor','moço'),
+        'Sir': ('senhor',),
+        'Madam': ('senhora',),
+        'Maam': ('senhora',),
+        "Ma'am": ('senhora',),
+    }
+    for address, equivalents in addresses.items():
+        if re.search(r"(?:^|,)\s*"+re.escape(address)+r"(?=\s*[,!?…]|[.!?]*\s*$)",source,re.I):
+            permitted.extend(equivalents)
+
     if any(contains(target, dst) and not contains(source, src)
            and not any(contains(allowed,dst) for allowed in permitted)
            for src, dst in names.items()):

@@ -8,7 +8,7 @@ Dialog {
     property int section: 0
     property string project: review.selectedProject
     function settings() {
-        return fansub.setPreset({font:fontInput.text,size:Number(sizeInput.text),color:colorInput.text,outline_color:outlineColor.text,outline:Number(outlineInput.text),shadow:Number(shadowInput.text),margin:Number(marginInput.text),alignment:alignment.currentIndex===1 ? 8 : 2,width:Number(widthInput.text),height:Number(heightInput.text),preserve_ass:true,bold:boldInput.checked})
+        return fansub.setPreset({font:fontInput.text,size:Number(sizeInput.text),color:colorInput.text,outline_color:outlineColor.text,outline:Number(outlineInput.text),shadow:Number(shadowInput.text),margin:Number(marginInput.text),alignment:alignment.currentIndex===1 ? 8 : 2,width:Number(widthInput.text),height:Number(heightInput.text),preserve_ass:true,bold:boldInput.checked,layout:fansub.preset.layout || 'standard'})
     }
     function fillPreset() {
         var p=fansub.preset

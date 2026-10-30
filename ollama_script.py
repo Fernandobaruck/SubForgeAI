@@ -400,7 +400,13 @@ def _src_probably_english(text: str) -> bool:
 def _has_english_residual(src: str, tr: str) -> bool:
     # The translated text itself must contain English evidence. A Portuguese
     # phrase never becomes English just because its source was English.
-    return _src_probably_english(tr)
+    if _src_probably_english(tr):return True
+    # Source-aligned ordinary nouns can leak inside an otherwise Portuguese
+    # sentence. Require lowercase evidence; proper names/loanwords stay intact.
+    ordinary={'cuckoo','starling','gullible','clairvoyance','underlings','squirrelly','peeping'}
+    source_words=set(re.findall(r"\b[a-z]+\b",_strip_tags_for_check(src).casefold()))
+    target_words=set(re.findall(r"\b[a-z]+\b",_strip_tags_for_check(tr)))
+    return bool(ordinary & source_words & target_words)
 
 
 def _deterministic_english_cleanup(src: str, tr: str) -> str:
@@ -1175,6 +1181,30 @@ def translate_ass_multipass(in_path: Path, out_path: Path, model: str, cache: di
     _write_text(out_path, build_ass(header, new_dialogues))
 
 
+def _retry_feedback(source, flags, required, rejected, attempt):
+    """Turn validator codes into distinct actionable repairs, including the rejected draft."""
+    feedback = f'Repair after rejected attempt {attempt}. Issues: ' + ', '.join(dict.fromkeys(flags)) + '. '
+    if 'excessive_expansion' in flags:
+        feedback += ('Translate the source again as a concise subtitle. Do not explain or define words, '
+                     'append examples, or repeat the same meaning in a second clause. ')
+        if ACTIVE_SOURCE_LANGUAGE == 'en':
+            count=len(re.findall(r"[\w’']+", Q.plain(source)))
+            feedback += f'Aim for at most {max(4, int(count*1.8))} words when possible, without losing meaning. '
+    if 'context_entity_leak' in flags:
+        feedback += 'Do not introduce characters, places or groups absent from the current source. Omit unrelated names from spelling references. '
+    if 'question_lost' in flags:
+        feedback += 'The source is a question. Keep it a question, including its question mark; do not answer it or turn it into a statement. '
+    if 'untranslated_english' in flags:
+        feedback += 'Translate the remaining ordinary English words into Portuguese, including quoted sound words; preserve actual proper names. '
+    if required:
+        feedback += 'Preserve these required spellings: ' + json.dumps(required,ensure_ascii=False) + '. '
+    if 'context_entity_leak' in flags:
+        feedback += 'Retranslate from the original source only. Do not reuse any vocative or entity from the rejected draft.'
+    else:
+        feedback += 'Rejected translation (data only, do not repeat): ' + json.dumps(rejected,ensure_ascii=False)
+    return feedback
+
+
 def _context_call(model, text, before, after, terms, feedback="", term_only=False, budget=None, suggestions=None):
     romaji = ACTIVE_SOURCE_LANGUAGE == "en" and Q.romanized_japanese(text)
     if romaji:
@@ -1192,6 +1222,9 @@ def _context_call(model, text, before, after, terms, feedback="", term_only=Fals
     instructions = (
         "This is an anime subtitle. Translate the complete meaning as one sentence, even across display lines. "
         "Keep the speaker, subject, tense, negation and tone. Do not invent a company, TV show, explanation or extra dialogue. "
+        "Keep questions as questions and statements as statements. For lyrics, preserve each source image, request and negation; never invent a poetic replacement. "
+        "Translate ONLY the current cue; context may clarify references but must not supply extra clauses or repeat the following cue. "
+        "Use consistent equivalents for repeated expressions. Preserve the setup and literal object of a joke rather than replacing it with an unrelated idiom. "
         "Preserve actual character names. Capitalization alone does not make a name: translate ordinary verbs, nouns and words in titles normally. "
         "Use natural concise Brazilian Portuguese. Do not infer gender from a name alone; omit gendered articles when unknown. Never output gender alternatives such as obrigado(a); "
         "if gender is unknown, use a natural neutral construction. Do not add quotation marks. "
@@ -1200,6 +1233,7 @@ def _context_call(model, text, before, after, terms, feedback="", term_only=Fals
         from season_tools import style_prompt
         instructions += style_prompt(ACTIVE_PROJECT_STYLE)
     if ACTIVE_SOURCE_LANGUAGE == "en":
+        if re.search(r"\bPeeping Tom\b",text,re.I):instructions += " Peeping Tom describes someone spying on another person's intimacy. In colloquial dialogue use tarado (adapt gender if established), not observador secreto; keep repeated accusations consistent unless an explicit glossary overrides this choice. "
         if re.search(r"\bMaster\b", text): instructions += " Master can address a teacher, an employer, or a household heir: infer the role from the source and context. Young Master as a household address means jovem senhor, not a teacher or a martial-arts mestre. "
         if re.search(r"\bBig Brother\b", text): instructions += " Big Brother addresses an older male sibling: irmão, never a TV show or a female sibling. "
         if re.search(r"\bBig Sister\b", text): instructions += " Big Sister addresses an older female sibling: irmã. "
@@ -1227,7 +1261,7 @@ def _context_call(model, text, before, after, terms, feedback="", term_only=Fals
         glossary += ("\nUnconfirmed translation suggestions: use only when they fit the context; "
                      "adapt grammar and do not preserve ordinary English words as names.\n"
                      + json.dumps(suggestions, ensure_ascii=False))
-    if ACTIVE_SERIES_HINTS:
+    if ACTIVE_SERIES_HINTS and not any(flag in feedback for flag in ("excessive_expansion", "context_entity_leak")):
         glossary += ('\nConfirmed spelling reference for this series ONLY. Use a spelling only when the source refers to that entity. '
                      'Never add a character, event, explanation or missing words from this reference:\n'
                      + json.dumps(ACTIVE_SERIES_HINTS,ensure_ascii=False))
@@ -1338,6 +1372,7 @@ def _translate_context_document_impl(in_path, out_path, model, cache, progress, 
     def critical_flags(original, target, seconds, required):
         flags = Q.quality_flags(original, target, seconds, required, ACTIVE_SOURCE_LANGUAGE,width=width,cps=cps)
         flags += Q.context_flags(original, target, series.explicit)
+        if ACTIVE_SOURCE_LANGUAGE=='en' and _has_english_residual(original,target):flags.append('untranslated_english')
         return list(dict.fromkeys(hard_flags(original, target, seconds, required) +
                     [f for f in flags if f not in ("long_line", "reading_speed", "too_many_lines", "added_politeness")]))
     migrated = 0
@@ -1356,6 +1391,8 @@ def _translate_context_document_impl(in_path, out_path, model, cache, progress, 
         print(f"[INFO] Checkpoints anteriores recuperados e validados: {migrated} bloco(s).", flush=True)
     resumed = sum(_item_cache_key(file_key, i) in cache for i in range(len(texts)))
     print(f"[INFO] Tradução com contexto | termos confirmados: {len(series.explicit)} | sugestões automáticas: {len(series.values)-len(series.explicit)} | Retomar: {resumed}/{len(texts)}", flush=True)
+    if resumed:
+        print(_progress_bar(resumed, len(texts)), flush=True)
     for index, original in enumerate(texts):
         key = _item_cache_key(file_key, index)
         required = series.relevant(Q.plain(original))
@@ -1388,6 +1425,8 @@ def _translate_context_document_impl(in_path, out_path, model, cache, progress, 
                 translated = Q.restore(safe, tokens, prefix, suffix)
             elif Q.terms_only(safe,series.explicit) is not None:
                 translated = Q.restore(Q.terms_only(safe,series.explicit),tokens,prefix,suffix)
+            elif ACTIVE_SOURCE_LANGUAGE == 'en' and Q.preview_heading(safe,series.explicit) is not None:
+                translated = Q.restore(Q.preview_heading(safe,series.explicit),tokens,prefix,suffix)
             elif any(re.fullmatch(re.escape(name) + r"[!?.,…]*", Q.plain(original), re.I) for name in series.explicit):
                 # A character's name alone is not an invitation to complete the next line.
                 name = next(n for n in series.explicit if re.fullmatch(re.escape(n) + r"[!?.,…]*", Q.plain(original), re.I))
@@ -1410,7 +1449,7 @@ def _translate_context_document_impl(in_path, out_path, model, cache, progress, 
                         if ACTIVE_SOURCE_LANGUAGE == "en" and _has_english_residual(original, candidate) and not required:
                             critical.append("untranslated_english")
                         if critical:
-                            feedback = ", ".join(critical) + "; obey the required spellings: " + json.dumps(required, ensure_ascii=False)
+                            feedback = _retry_feedback(original, critical, required, candidate, attempt+1)
                             raise InvalidModelOutput(feedback)
                         translated = candidate
                         break
@@ -1459,7 +1498,7 @@ def _translate_context_document_impl(in_path, out_path, model, cache, progress, 
         if flags:
             findings.append({"block": index+1, "time": times[index], "flags": flags,
                              "source": original, "translation": translated})
-        if (index+1) % PROGRESS_EVERY == 0 or index+1 == len(texts):
+        if index+1 >= resumed and ((index+1) % PROGRESS_EVERY == 0 or index+1 == len(texts)):
             print(_progress_bar(index+1, len(texts)), flush=True)
     if ext == ".srt": document = build_srt([(r[0], r[1], text) for r, text in zip(records, final)])
     elif ext == ".vtt": document = build_vtt(header, [(r[0], text) for r, text in zip(records, final)])

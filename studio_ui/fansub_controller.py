@@ -126,6 +126,8 @@ class FansubController(QObject):
                 from speech_context import write_context
                 write_context(target,doc.video_path or doc.origin_path,doc.source_context.get('confirmed_terms',{}),source_kind='subtitle',series_project=doc.project or None)
                 atomic_write_text(Path(str(target)+'.export.json'),json.dumps(dict(source=str(doc.origin_path),source_sha=digest(doc.render().encode()),preset=preset,annotations=doc.annotations,created=time.strftime('%Y-%m-%d %H:%M:%S')),ensure_ascii=False,indent=2))
+                from .output_layout import compact_result
+                compact_result(target)
             return str(target)
         def done(path):self.review.owner.refreshResults();self.notify(self.text('ASS exportado: {path}').format(path=path))
         self.review._submit('Exportando ASS',work,done)
@@ -173,7 +175,7 @@ class FansubController(QObject):
     @Slot(int)
     def chooseSeason(self,expected_end):
         if not self.ready():return
-        folder=QFileDialog.getExistingDirectory(None,self.text('Escolher pasta da temporada'),str(self.review.root),options=QFileDialog.DontUseNativeDialog)
+        folder=QFileDialog.getExistingDirectory(None,self.text('Escolher pasta da temporada'),str(self.review.root))
         if folder:self.inspectSeason(folder,expected_end)
     @Slot()
     def addOrganized(self):

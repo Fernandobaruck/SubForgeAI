@@ -1,5 +1,6 @@
 """Safe subtitle editing, technical triage, version history and scoped backups."""
 from __future__ import annotations
+from studio_ui.output_layout import sidecar_path
 import hashlib,json,re,time,uuid,zipfile,os,tempfile
 from pathlib import Path,PurePosixPath
 from pipeline_io import atomic_write_text,staged_output,directory_lock
@@ -119,14 +120,14 @@ class SubtitleDocument:
         self.raw=raw;self.records=records;self.template=template;self.values=values;self.times=times;self.bounds=bounds
 
     def load_reports(self):
-        quality=json_read(Path(str(self.report_path)+'.quality.json'))
+        quality=json_read(sidecar_path(self.report_path,'.quality.json'))
         for entry in quality.get('findings',[]):
             index=entry.get('block',0)-1
             if 0<=index<len(self.values):
                 self.reported[index]=list(entry.get('flags',[]))
                 if entry.get('source'):self.original_texts[index]=entry['source']
         for suffix,key in (('.transcription.json','review_findings'),('.ocr.json','records')):
-            report=json_read(Path(str(self.report_path)+suffix))
+            report=json_read(sidecar_path(self.report_path,suffix))
             for entry in report.get(key,[]):
                 if not entry.get('flags'):continue
                 start,end=entry.get('start'),entry.get('end')
@@ -136,16 +137,16 @@ class SubtitleDocument:
         candidate=quality.get('source')
         if candidate and Path(candidate).is_file() and Path(candidate).resolve()!=self.path:
             self.attach_source(candidate)
-        if not self.source_path and self.report_path.is_file() and (Path(str(self.report_path)+'.transcription.json').is_file() or Path(str(self.report_path)+'.ocr.json').is_file()):
+        if not self.source_path and self.report_path.is_file() and (sidecar_path(self.report_path,'.transcription.json').is_file() or sidecar_path(self.report_path,'.ocr.json').is_file()):
             self.attach_source(self.report_path)
         from speech_context import read_context
         context=read_context(self.path);self.project=context.get('series_project') or self.source_context.get('series_project') or quality.get('source_provenance',{}).get('series_project','')
         for source in (context.get('source_file'),):
             if source and Path(source).is_file() and Path(source).suffix.lower() in MEDIA_EXTENSIONS:self.video_path=str(Path(source).resolve())
-        audit=json_read(Path(str(self.report_path)+'.transcription.json'))
+        audit=json_read(sidecar_path(self.report_path,'.transcription.json'))
         self.audio_stream=audit.get('audio_stream')
         if self.source_path:
-            audit=json_read(Path(str(self.source_path)+'.transcription.json'))
+            audit=json_read(sidecar_path(self.source_path,'.transcription.json'))
             self.audio_stream=audit.get('audio_stream',self.audio_stream)
             context=read_context(self.source_path)
             video=context.get('source_file')

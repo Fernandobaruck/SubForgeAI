@@ -125,8 +125,10 @@ class ReviewController(QObject):
             except OSError as exc:self._notify(str(exc))
     @Slot()
     def chooseDocument(self):
-        path,_=QFileDialog.getOpenFileName(None,self._text('Abrir legenda para revisão'),str(self.root/'outputs'),'SRT / ASS / VTT / JSON (*.srt *.ass *.vtt *.review_required.json)',options=QFileDialog.DontUseNativeDialog)
-        if path:self.openDocument(path)
+        path,_=QFileDialog.getOpenFileName(None,self._text('Abrir legenda para revisão'),self.owner.fileLocations.start('review',self.root/'outputs'),'SRT / ASS / VTT / JSON (*.srt *.ass *.vtt *.review_required.json)')
+        if path:
+            self.owner.fileLocations.remember("review",path)
+            self.openDocument(path)
     @Slot(str)
     def openDocument(self,path):
         if self.dirty:self._notify('Salve a revisão antes de abrir outra legenda.');return
@@ -187,14 +189,14 @@ class ReviewController(QObject):
     @Slot()
     def chooseSource(self):
         if not self.document or self._busy:return
-        path,_=QFileDialog.getOpenFileName(None,self._text('Escolher legenda original'),str(self.root),'SRT / ASS / VTT (*.srt *.ass *.vtt)',options=QFileDialog.DontUseNativeDialog)
+        path,_=QFileDialog.getOpenFileName(None,self._text('Escolher legenda original'),self.owner.fileLocations.start('input'),'SRT / ASS / VTT (*.srt *.ass *.vtt)')
         if path:
             try:self.document.attach_source(path);self.document.metadata_dirty=True;self._reload_rows();self._draft_timer.start()
             except Exception as exc:self._notify(str(exc))
     @Slot()
     def chooseVideo(self):
         if not self.document or self._busy:return
-        path,_=QFileDialog.getOpenFileName(None,self._text('Escolher vídeo da revisão'),str(self.root),self._text('Vídeos')+' (*.mkv *.mp4 *.avi *.mov *.webm *.m4v)',options=QFileDialog.DontUseNativeDialog)
+        path,_=QFileDialog.getOpenFileName(None,self._text('Escolher vídeo da revisão'),self.owner.fileLocations.start('input'),self._text('Vídeos')+' (*.mkv *.mp4 *.avi *.mov *.webm *.m4v)')
         if path:self.document.video_path=path;self.document.audio_stream=None;self.document.metadata_dirty=True;self._draft_timer.start();self.changed.emit()
     @Slot()
     def playCurrent(self,lead=1):
@@ -307,7 +309,7 @@ class ReviewController(QObject):
     @Slot()
     def bindSeason(self):
         if not self._project:self._notify('Escolha um anime.');return
-        folder=QFileDialog.getExistingDirectory(None,self._text('Vincular pasta de temporada'),str(self.root),options=QFileDialog.DontUseNativeDialog)
+        folder=QFileDialog.getExistingDirectory(None,self._text('Vincular pasta de temporada'),str(self.root))
         if folder:
             try:self.registry.bind_folder(self._project,folder);self.changed.emit()
             except Exception as exc:self._notify(str(exc))
@@ -322,7 +324,7 @@ class ReviewController(QObject):
     @Slot()
     def chooseRestoreBackup(self):
         if self.dirty:self._notify('Salve a revisão antes de restaurar o backup.');return
-        path,_=QFileDialog.getOpenFileName(None,self._text('Restaurar backup do Studio'),str(self.root/'backups/studio'),'ZIP (*.zip)',options=QFileDialog.DontUseNativeDialog)
+        path,_=QFileDialog.getOpenFileName(None,self._text('Restaurar backup do Studio'),str(self.root/'backups/studio'),'ZIP (*.zip)')
         if not path:return
         def restored(safety):
             self.owner._settings=self.owner._load_settings();self.owner._apply_ui_preferences();self.owner.preferencesChanged.emit();self.refreshProjects()
@@ -342,7 +344,7 @@ class ReviewController(QObject):
         self._submit('Inspecionando faixas',work,ready)
     @Slot(str)
     def chooseInputSubtitle(self,identifier):
-        path,_=QFileDialog.getOpenFileName(None,self._text('Escolher legenda original'),str(self.root),'SRT / ASS / VTT / SUP (*.srt *.ass *.vtt *.sup)',options=QFileDialog.DontUseNativeDialog)
+        path,_=QFileDialog.getOpenFileName(None,self._text('Escolher legenda original'),self.owner.fileLocations.start('input'),'SRT / ASS / VTT / SUP (*.srt *.ass *.vtt *.sup)')
         if path and self._source_info.get('id')==identifier:
             self._source_info['options']['source_subtitle']=path;self.changed.emit()
     @Slot(str,'QVariantMap',result=bool)
