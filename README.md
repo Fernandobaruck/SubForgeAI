@@ -4,17 +4,21 @@ Aplicativo para Windows voltado à criação e revisão de legendas de anime, co
 
 ## Baixar e começar
 
-**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.5/SubForgeAI-Instalar-rapido-1.0.5.zip)**
+**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.5/SubForgeAI-Instalar-visual-1.0.5.exe)**
 
 [Ver todos os downloads e notas da versão](https://github.com/Fernandobaruck/SubForgeAI/releases/latest)
 
-1. Baixe **SubForgeAI-Instalar-rapido-1.0.5.zip**, extraia e abra **Instalar.cmd**.
-2. Escolha uma pasta e aguarde. O instalador baixa, verifica e prepara o aplicativo sem pedir instalação de Python, Qt, Ollama ou FFmpeg à parte.
+1. Baixe **SubForgeAI-Instalar-visual-1.0.5.exe** e abra o executável. Não precisa extrair ZIP nem abrir CMD.
+2. Escolha uma pasta na janela, clique em **Instalar** e aguarde. O instalador baixa, verifica e prepara o aplicativo sem pedir instalação de Python, Qt, Ollama ou FFmpeg à parte.
 3. No Studio, clique em **Preparar para começar** e baixe os modelos que deseja usar. Depois, adicione seus arquivos e inicie pela fila.
 
 **Já usa o Studio?** Atualize pela aba **Atualizações**. O arquivo `SubForgeAI-update-*` é destinado a instalações existentes; novos usuários devem baixar o ZIP **Instalar**.
 
-O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** instalado, sem modelos e sem dados pessoais. É necessário espaço temporário adicional durante a instalação. O instalador rápido usa motor nativo com até quatro partes simultâneas. As partes `.bin` da release são baixadas automaticamente pelo instalador. Não é necessário baixá-las manualmente. O botão **Code → Download ZIP** baixa apenas o código para desenvolvimento.
+O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** instalado, sem modelos e sem dados pessoais. É necessário espaço temporário adicional durante a instalação. O instalador gráfico usa motor nativo com até quatro partes simultâneas, pausa, retomada e opção de uma conexão. As partes `.bin` da release são baixadas automaticamente pelo instalador. Não é necessário baixá-las manualmente. O botão **Code → Download ZIP** baixa apenas o código para desenvolvimento.
+
+[Instalador alternativo em ZIP](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.5/SubForgeAI-Instalar-rapido-1.0.5.zip): extraia todos os arquivos e abra Instalar.cmd.
+
+![Interface do instalador gráfico, com progresso ilustrativo](assets/screenshots/installer.png)
 
 [Guia passo a passo e solução de problemas](docs/PRIMEIROS-PASSOS.md) · [Reportar problema](https://github.com/Fernandobaruck/SubForgeAI/issues)
 
