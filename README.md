@@ -4,17 +4,17 @@ Aplicativo para Windows voltado à criação e revisão de legendas de anime, co
 
 ## Baixar e começar
 
-**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.4/SubForgeAI-Instalar-1.0.4.zip)**
+**[BAIXAR INSTALADOR PARA WINDOWS](https://github.com/Fernandobaruck/SubForgeAI/releases/download/v1.0.4/SubForgeAI-Instalar-rapido-1.0.4.zip)**
 
 [Ver todos os downloads e notas da versão](https://github.com/Fernandobaruck/SubForgeAI/releases/latest)
 
-1. Baixe **SubForgeAI-Instalar-1.0.4.zip**, extraia e abra **Instalar.cmd**.
+1. Baixe **SubForgeAI-Instalar-rapido-1.0.4.zip**, extraia e abra **Instalar.cmd**.
 2. Escolha uma pasta e aguarde. O instalador baixa, verifica e prepara o aplicativo sem pedir instalação de Python, Qt, Ollama ou FFmpeg à parte.
 3. No Studio, clique em **Preparar para começar** e baixe os modelos que deseja usar. Depois, adicione seus arquivos e inicie pela fila.
 
 **Já usa o Studio?** Atualize pela aba **Atualizações**. O arquivo `SubForgeAI-update-*` é destinado a instalações existentes; novos usuários devem baixar o ZIP **Instalar**.
 
-O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** instalado, sem modelos e sem dados pessoais. É necessário espaço temporário adicional durante a instalação. As partes `.bin` da release são baixadas automaticamente pelo instalador. Não é necessário baixá-las manualmente. O botão **Code → Download ZIP** baixa apenas o código para desenvolvimento.
+O download inicial tem aproximadamente **5,8 GB** e ocupa cerca de **9,6 GB** instalado, sem modelos e sem dados pessoais. É necessário espaço temporário adicional durante a instalação. O instalador rápido usa motor nativo com até quatro partes simultâneas. As partes `.bin` da release são baixadas automaticamente pelo instalador. Não é necessário baixá-las manualmente. O botão **Code → Download ZIP** baixa apenas o código para desenvolvimento.
 
 [Guia passo a passo e solução de problemas](docs/PRIMEIROS-PASSOS.md) · [Reportar problema](https://github.com/Fernandobaruck/SubForgeAI/issues)
 
@@ -74,3 +74,5 @@ Configurações, glossários pessoais, histórico, saídas, caches, modelos e ch
 ## Licenciamento
 
 Nenhuma licença de uso ou redistribuição do código foi definida pelo titular até o momento. Dependências e modelos mantêm suas próprias licenças; consulte os respectivos fornecedores antes de redistribuí-los.
+
+Se você já começou a baixar a mesma versão pelo instalador antigo, feche o CMD antigo, extraia todo o ZIP do instalador rápido e abra **Instalar.cmd**. Ele aproveita automaticamente o cache do mesmo usuário do Windows. Não apague o cache nem execute dois instaladores ao mesmo tempo. Para redes que não funcionem bem com paralelismo, use **Instalar-1-conexao.cmd**.

@@ -1,6 +1,7 @@
-param([string]$DestinationParent, [string]$SourceDirectory, [switch]$NoLaunch)
+param([string]$DestinationParent, [string]$SourceDirectory, [switch]$NoLaunch, [ValidateRange(1,8)][int]$Connections = 4)
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+[Net.ServicePointManager]::DefaultConnectionLimit = 8
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $version = '__VERSION__'
@@ -104,6 +105,31 @@ try {
     foreach ($part in $manifest.parts) {
         if ($part.name -notmatch '^SubForgeAI-portable-\d+\.\d+\.\d+\.part\d{2}\.bin$' -or $seen.ContainsKey($part.name) -or $part.size -lt 1 -or $part.size -gt 1GB -or $part.sha256 -notmatch '^[a-f0-9]{64}$') { throw 'Parte de instalação inválida.' }
         $seen[$part.name] = $true
+    }
+    $enginePath = Join-Path $PSScriptRoot 'DownloadEngine.cs'
+    if (-not $SourceDirectory -and (Test-Path -LiteralPath $enginePath)) {
+        if (-not ('SubForgeDownloadSession' -as [type])) { Add-Type -Path $enginePath }
+        $urls = [string[]]@($manifest.parts | ForEach-Object { $release + $_.name })
+        $paths = [string[]]@($manifest.parts | ForEach-Object { Join-Path $cache $_.name })
+        $sizes = [long[]]@($manifest.parts | ForEach-Object { [long]$_.size })
+        $download = [SubForgeDownloadSession]::Start($urls, $paths, $sizes, $Connections)
+        $clock = [Diagnostics.Stopwatch]::StartNew()
+        try {
+            Write-Host ("Download nativo: até {0} partes simultâneas. Arquivos parciais serão aproveitados." -f $Connections)
+            while (-not $download.IsCompleted) {
+                $speed = [Math]::Max(0, $download.Completed - $download.Initial) / 1MB / [Math]::Max(0.001, $clock.Elapsed.TotalSeconds)
+                $remaining = '--'
+                if ($speed -gt 0) { $remaining = '{0:N0} min' -f (($download.Total - $download.Completed) / 1MB / $speed / 60) }
+                Write-Progress -Activity 'Baixando aplicativo' -Status ('{0:N1} MB/s - restante estimado: {1}' -f $speed, $remaining) -PercentComplete ([Math]::Min(100, 100*$download.Completed/$download.Total))
+                Start-Sleep -Milliseconds 250
+            }
+            $download.Wait()
+        } finally {
+            $download.Dispose()
+            Write-Progress -Activity 'Baixando aplicativo' -Completed
+        }
+    }
+    foreach ($part in $manifest.parts) {
         $path = Join-Path $cache $part.name
         Download-File ($release + $part.name) $path $part.size
         Write-Host ('Verificando ' + $part.name)

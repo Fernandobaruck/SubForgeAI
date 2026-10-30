@@ -112,13 +112,8 @@ def main():
     envelope = dict(payload_b64=base64.b64encode(encoded).decode(), signature=base64.b64encode(sign(private, encoded)).decode())
     manifest = out / f'SubForgeAI-portable-{VERSION}.manifest.json'
     manifest.write_text(json.dumps(envelope, indent=2), encoding='utf-8')
-    script = (ROOT / 'tools/installer/Instalar.ps1').read_text(encoding='utf-8')
-    script = script.replace('__VERSION__', VERSION).replace('__REPOSITORY__', REPOSITORY).replace('__PUBLIC_KEY__', PUBLIC_KEY_B64)
-    setup = out / f'SubForgeAI-Instalar-{VERSION}.zip'
-    with zipfile.ZipFile(setup, 'w', zipfile.ZIP_DEFLATED) as z:
-        z.writestr('Instalar.ps1', b'\xef\xbb\xbf'+script.encode('utf-8'))
-        z.writestr('Instalar.cmd', '@echo off\r\ncd /d "%~dp0"\r\npowershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0Instalar.ps1"\r\nif errorlevel 1 pause\r\n')
-        z.writestr('LEIA-ME.txt', 'Extraia este ZIP e abra Instalar.cmd. Escolha uma pasta. O instalador baixa e verifica o aplicativo. Modelos são baixados depois pelo Studio. Internet necessária na preparação inicial. Não execute como administrador.\r\n'.encode('utf-8'))
+    from tools.build_installer import build as build_installer
+    setup = build_installer(ROOT, out, VERSION)
     print(json.dumps(dict(setup=str(setup), parts=parts, manifest=str(manifest), zip_size=payload['zip_size'])), flush=True)
 
 
